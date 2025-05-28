@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "12153493344",
+    "project_id": "momentum-95eff",
+    "storage_bucket": "momentum-95eff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12153493344:android:0dcbb063e4caad81cff005",
+        "android_client_info": {
+          "package_name": "com.JerkWeight.Momentum"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12153493344-cvk0tcoprjj8krs6vjvu8mevej7iviik.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.JerkWeight.Momentum",
+            "certificate_hash": "03e1afc8c65affd97002c668e87cb3c11259c54d"
+          }
+        },
+        {
+          "client_id": "12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyqYa2A6lIPw3b3sNGcHCtg8TsTdz8J7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
