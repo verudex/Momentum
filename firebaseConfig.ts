@@ -17,3 +17,5 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 const analytics = getAnalytics(app);
+
+// Android Client ID: 404413087560-rc16d6m5h55abo96bcaj89flnruph56l.apps.googleusercontent.com
