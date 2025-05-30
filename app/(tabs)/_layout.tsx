@@ -1,28 +1,29 @@
 import { Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
-import { MaterialIcons, Ionicons, AntDesign } from '@expo/vector-icons';
+import { FontAwesome6, Ionicons, AntDesign } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TabIcon = ({ focused, iconName, label, IconPack }) => {
   return (
-    <View style={{ 
+    <View style={{
       alignItems: 'center',
       justifyContent: 'center',
-      width: 80, // Fixed width for each tab
+      width: 80,
     }}>
-      <IconPack 
-        name={iconName} 
+      <IconPack
+        name={iconName}
         size={24}
         color={focused ? 'black' : 'gray'}
       />
-      <Text 
-        numberOfLines={1} // Prevent text wrapping
-        ellipsizeMode="tail" // Add "..." if text is too long
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
         style={{
           fontSize: 12,
           color: focused ? 'black' : 'gray',
           marginTop: 4,
-          width: '100%', // Take full available width
-          textAlign: 'center', // Center text
+          width: '100%',
+          textAlign: 'center',
         }}
       >
         {label}
@@ -32,72 +33,61 @@ const TabIcon = ({ focused, iconName, label, IconPack }) => {
 };
 
 const _layout = () => {
+  const insets = useSafeAreaInsets();
+
   return (
-    <Tabs
-      screenOptions={{
-        tabBarShowLabel: false,  // Hide default labels if using custom ones
-        tabBarStyle: {
-          height: 80,  // Increased height for better icon+text display
-        },
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <Tabs
+        screenOptions={{
+          tabBarShowLabel: false,
+          tabBarStyle: {
+            backgroundColor: 'white',
+            height: 60 + (insets.bottom || 0),
+            paddingBottom: insets.bottom || 0,
+            paddingTop: 10,
+            borderTopWidth: 0.5,
+            borderTopColor: '#ccc',
+          },
+        }}
+      >
         <Tabs.Screen
-            name="index"
-            options={{
-                headerShown: false,
-                tabBarIcon: ({ focused }) => (
-                    <TabIcon 
-                        focused={focused} 
-                        iconName="home" 
-                        label="Home" 
-                        IconPack={Ionicons}  // Pass the component, not string
-                    />
-                ),
-            }}
+          name="index"
+          options={{
+            headerShown: false,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} iconName="home" label="Home" IconPack={Ionicons} />
+            ),
+          }}
         />
         <Tabs.Screen
-            name="workoutTracking"
-            options={{
-                headerShown: false,
-                tabBarIcon: ({ focused }) => (
-                    <TabIcon 
-                        focused={focused} 
-                        iconName="sports-martial-arts"  // Correct icon name
-                        label="Workout" 
-                        IconPack={MaterialIcons}  // Pass the component
-                    />
-                ),
-            }}
+          name="workoutTracking"
+          options={{
+            headerShown: false,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} iconName="dumbbell" label="Workout" IconPack={FontAwesome6} />
+            ),
+          }}
         />
         <Tabs.Screen
-            name="dietTracking"
-            options={{
-                headerShown: false,
-                tabBarIcon: ({ focused }) => (
-                    <TabIcon 
-                        focused={focused} 
-                        iconName="fast-food"  // Correct icon name
-                        label="Diet" 
-                        IconPack={Ionicons}
-                    />
-                ),
-            }}
+          name="dietTracking"
+          options={{
+            headerShown: false,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} iconName="fast-food" label="Diet" IconPack={Ionicons} />
+            ),
+          }}
         />
         <Tabs.Screen
-            name="profile"
-            options={{
-                headerShown: false,
-                tabBarIcon: ({ focused }) => (
-                    <TabIcon 
-                        focused={focused} 
-                        iconName="user"  // More appropriate profile icon
-                        label="Profile" 
-                        IconPack={AntDesign}
-                    />
-                ),
-            }}
+          name="profile"
+          options={{
+            headerShown: false,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} iconName="user" label="Profile" IconPack={AntDesign} />
+            ),
+          }}
         />
-    </Tabs>
+      </Tabs>
+    </View>
   );
 };
 

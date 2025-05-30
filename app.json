@@ -5,12 +5,12 @@
     "slug": "MomentumApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/MomentumLogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "owner": "momentumcorp",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/MomentumLogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/images/MomentumLogo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -27,7 +27,7 @@
       "googleServicesFile": "./google-services.json"
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/images/MomentumLogo.png",
       "bundler": "metro"
     },
     "plugins": [
