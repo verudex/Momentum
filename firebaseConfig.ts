@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth } from 'firebase/auth';
+import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyABpQ4VetFSr4j6oKlTqY0FPGA4uB4g0s8",
@@ -14,8 +14,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+export const app = initializeApp(firebaseConfig);
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
 const analytics = getAnalytics(app);
 
 // Android Client ID: 404413087560-rc16d6m5h55abo96bcaj89flnruph56l.apps.googleusercontent.com
+// Android SHA1 fingerprint: B8:10:90:4E:19:35:3E:07:69:1A:2F:45:CD:1C:3B:BA:90:D9:9F:6C gen by EAS configure

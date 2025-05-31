@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "12153493344-cvk0tcoprjj8krs6vjvu8mevej7iviik.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.JerkWeight.Momentum",
-            "certificate_hash": "03e1afc8c65affd97002c668e87cb3c11259c54d"
-          }
-        },
-        {
           "client_id": "12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com",
           "client_type": 3
         }
