@@ -2,8 +2,11 @@ import React from "react";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useDisableBack } from "../../hooks/useDisableBack";
 
 const WorkoutTracking = () => {
+  useDisableBack();
+  
   return (
     <SafeAreaView className="flex-1 justify-center items-center">
       

@@ -2,14 +2,14 @@ import React from "react";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useDisableBack } from "../../hooks/useDisableBack";
 
 const Profile = () => {
+  useDisableBack();
   const router = useRouter();
 
   const handleLogout = () => {
-    router.replace({
-      pathname: "/",
-    });
+    router.replace("/");
   };
 
   return (
