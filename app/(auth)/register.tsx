@@ -23,7 +23,7 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const isInvalid = !username || !email || !password || !confirmPassword || password !== confirmPassword;
+  const isInvalid = !username || !email || !password || !confirmPassword || !email.includes("@") || password !== confirmPassword;
 
   return (
     <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}> 
