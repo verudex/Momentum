@@ -9,17 +9,57 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  Alert,
+  ActivityIndicator
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
+import auth from '@react-native-firebase/auth';
 
 const Login = () => {
-  const router = useRouter();
-  const [loginId, setLoginId] = useState("");
+  const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const isInvalid = !loginId || !password;
+  const isInvalid = !email || !password;
+
+  // If email is invalid
+  const handleLogin = async () => {
+    if (!email.includes("@")) {
+      Alert.alert("Invalid Email", "Please enter a valid email address");
+      return;
+  }
+
+  setIsLoading(true);
+      try {
+      await auth().signInWithEmailAndPassword(email, password);
+      console.log("test");
+      // Successful login - AuthContext will handle redirection
+    } catch (error) {
+      console.error("Login error:", error);
+      
+      // Handle specific error cases
+      switch (error.code) {
+        case 'auth/invalid-email':
+          Alert.alert("Invalid Email", "The email address is badly formatted");
+          break;
+        case 'auth/user-not-found':
+          Alert.alert("Account Not Found", "No user found with this email");
+          break;
+        case 'auth/wrong-password':
+          Alert.alert("Wrong Password", "Incorrect password for this account");
+          break;
+        case 'auth/too-many-requests':
+          Alert.alert("Access Blocked", "Too many failed attempts. Try again later or reset your password");
+          break;
+        default:
+          Alert.alert("Login Failed", error.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}> 
@@ -40,9 +80,11 @@ const Login = () => {
           <Animated.View entering={FadeInDown.delay(400).duration(1000).springify()}>
             <TextInput
               style={styles.input}
-              placeholder="Email/Username"
+              placeholder="Email"
               autoCapitalize="none"
-              onChangeText={(loginId) => setLoginId(loginId)}
+              keyboardType="email-address"
+              onChangeText={setEmail}
+              value={email}
             />
           </Animated.View>
 
@@ -69,11 +111,15 @@ const Login = () => {
 
           <Animated.View entering={FadeInDown.delay(800).duration(1000).springify()}>
             <TouchableOpacity
-              disabled={isInvalid}
-              onPress={() => router.replace("/(tabs)/home")}
-              style={[styles.button, isInvalid && styles.disabled]}
+              disabled={isInvalid || isLoading}
+              onPress={handleLogin}
+              style={[styles.button, (isInvalid || isLoading) && styles.disabled]}
             >
-              <Text style={styles.buttonText}>Sign in</Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.buttonText}>Sign in</Text>
+              )}
             </TouchableOpacity>
           </Animated.View>
         </View>

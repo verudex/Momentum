@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+// import { auth } from '../../firebaseConfig'
+import React, { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,8 +14,18 @@ import {
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
+import {
+  GoogleSignin,
+  statusCodes,
+  isErrorWithCode,
+  GoogleSigninButton,
+} from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
+
+
 
 const Register = () => {
+const { user, initializing } = useContext(AuthContext);
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -24,6 +36,104 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const isInvalid = !username || !email || !password || !confirmPassword || !email.includes("@") || password !== confirmPassword;
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already logged in
+  // useEffect(() => {
+  //   if (user && !initializing) {
+  //     router.replace("/(tabs)/home");
+  //   }
+  // }, [user, initializing]);
+
+  // Configure Google Sign-In webclient Id
+  useEffect(() => {
+      GoogleSignin.configure({
+      webClientId: '12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com',
+    });
+  }, []);
+
+  // Google Sign-In Logic
+  const signIn = async () => {
+    try {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+    //const { idToken } = await GoogleSignin.getTokens();
+    const { idToken } = await GoogleSignin.signIn();
+
+    if (!idToken) {
+      throw new Error('No ID token found');
+    }
+
+    // Create a Google credential with the token
+    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+    // Sign in the user with the credential
+    await auth().signInWithCredential(googleCredential);
+    console.log("Current user in context:", user);
+
+
+    // Navigate to home
+    console.log("Firebase sign-in successful");
+    //router.replace("/(tabs)/home");
+
+
+  } catch (error) {
+    console.error("Google Sign-In error:", error);
+
+    if (isErrorWithCode(error)) {
+      switch (error.code) {
+        case statusCodes.IN_PROGRESS:
+          console.warn("Sign-in already in progress");
+          break;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          console.warn("Play Services not available or outdated");
+          break;
+        default:
+          console.warn("Unhandled error:", error.message);
+      }
+    }
+  }
+};
+
+
+  const handleRegister = async () => {
+    // Clear previous errors
+    setEmailError("");
+    setPasswordError("");
+
+    // Client-side validation
+    if (!email.includes("@")) {
+      setEmailError("Please enter a valid email");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords don't match");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await auth().createUserWithEmailAndPassword(
+        email, 
+        password
+      );
+      // router.replace("/(tabs)/home");
+      } catch (error) {
+      console.error('Registration error:', error);
+    
+    // Handle specific errors
+    if (error.code === 'auth/email-already-in-use') {
+      setEmailError('That email address is already in use!');
+    } else if (error.code === 'auth/invalid-email') {
+      setEmailError('That email address is invalid!');
+    } else if (error.code === 'auth/weak-password') {
+      setPasswordError('Password should be at least 6 characters');
+    }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}> 
@@ -52,8 +162,10 @@ const Register = () => {
               autoComplete="email"
               onChangeText={(email) => {
                 setEmail(email);
-                setEmailError(email.includes("@") ? "" : "Please enter a valid email.");
-              }}
+                //Clear error when user starts typing again
+                if (emailError) setEmailError("")              
+                }}
+              value={email}
             />
             {emailError ? <Text style={styles.error}>{emailError}</Text> : null}
           </Animated.View>
@@ -81,7 +193,10 @@ const Register = () => {
               autoCapitalize="none"
               onChangeText={(pw) => {
                 setPassword(pw);
-                setPasswordError(confirmPassword && pw !== confirmPassword ? "Passwords do not match." : "");
+                if (passwordError) setPasswordError(""); // Clear error when typing
+                if (confirmPassword) {
+                  setPasswordError(pw !== confirmPassword ? "Passwords do not match." : "");
+                }
               }}
             />
             <TouchableOpacity
@@ -103,9 +218,10 @@ const Register = () => {
               secureTextEntry={!showPassword}
               autoCapitalize="none"
               onChangeText={(pw) => {
-                setConfirmPassword(pw);
-                setPasswordError(password && pw !== password ? "Passwords do not match." : "");
-              }}
+              setConfirmPassword(pw);
+              if (passwordError) setPasswordError(""); // Clear error when typing
+              setPasswordError(password && pw !== password ? "Passwords do not match." : "");
+            }}
             />
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
@@ -119,11 +235,13 @@ const Register = () => {
 
           <Animated.View entering={FadeInDown.delay(1200).duration(1000).springify()}>
             <TouchableOpacity
-              disabled={isInvalid}
-              onPress={() => router.replace("/(tabs)/home")}
-              style={[styles.registerButton, isInvalid && styles.disabled]}
+              disabled={isLoading}
+              onPress={handleRegister}
+              style={[styles.registerButton]}
             >
-              <Text style={styles.registerButtonText}>Register</Text>
+              <Text style={styles.registerButtonText}>
+                {isLoading ? 'Registering...' : 'Register'}
+              </Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -151,9 +269,14 @@ const Register = () => {
           entering={FadeInDown.delay(1800).duration(1000).springify()}
           style={styles.googleWrapper}
         >
-          <TouchableOpacity style={styles.googleButton}>
+          {/* <TouchableOpacity style={styles.googleButton}>
             <Text style={styles.googleButtonText}>Sign up with Google</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <GoogleSigninButton
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Dark}
+            onPress={signIn}
+          />
         </Animated.View>
       </View>
     </SafeAreaView>

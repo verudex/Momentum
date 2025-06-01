@@ -1,0 +1,15 @@
+[33m5ca26de[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/login_register[m[33m)[m test1
+[33mc7bdb39[m fixed the react native reanimated issue. starting with google firebase now
+[33m1599788[m[33m ([m[1;31morigin/feature/login_register[m[33m)[m Polished Start/Login/Register CSS and added animations
+[33m21b9a77[m Added login/register and polished CSS for others
+[33m752d230[m Syncing Progress
+[33md48b0c1[m[33m ([m[1;31morigin/feature/firebase_database[m[33m, [m[1;32mfeature/firebase_database[m[33m)[m Added the bottom scroll navigation bar thingy
+[33m30af79f[m changing the owner to momentumcorp
+[33m4ed8907[m Firebase day1
+[33m7887480[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m, [m[1;32mfeature/my-new-feature[m[33m)[m Merge pull request #1 from KenOKK3003/setup-dev-build
+[33m7a52a8b[m[33m ([m[1;31morigin/setup-dev-build[m[33m)[m setup the developer build
+[33m65e2c26[m Update README.md
+[33m45f70fe[m Merge branch 'main' of https://github.com/KenOKK3003/Momentum Starting nowwwww
+[33mecedd32[m Initial commit
+[33m3d04a59[m Test1"
+[33mc1b292f[m Remove all files
