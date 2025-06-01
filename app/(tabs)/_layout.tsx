@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
+import { StatusBar } from 'react-native';
 import { FontAwesome6, Ionicons, AntDesign } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -37,6 +38,7 @@ const _layout = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <StatusBar barStyle="dark-content" />
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
