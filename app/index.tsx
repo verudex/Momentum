@@ -27,7 +27,7 @@ const Startup = () => {
         <Animated.Image
           entering={FadeInUp.delay(500).duration(1000).springify()} 
           style={styles.logo}
-          source={require("../assets/images/MomentumLogoTextTransparent.png")}
+          source={require("../assets/images/MomentumLogoBlackTransparent.png")}
         />
 
         <Animated.Text 
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    color: 'rgba(34, 37, 78, 1)',
+    color: 'rgb(42, 38, 38)',
     fontWeight: 'bold',
     marginBottom: 20,
   },

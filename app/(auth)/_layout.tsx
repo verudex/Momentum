@@ -1,10 +1,12 @@
 import { Stack } from 'expo-router';
+import { StatusBar } from 'react-native';
+import { AuthProvider } from '../../contexts/AuthContext';
 
 export default function AuthLayout() {
   return (
-      <Stack>
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-      </Stack>
+    <AuthProvider>
+      <StatusBar barStyle="dark-content" />
+      <Stack screenOptions={{headerShown: false}}/>
+    </AuthProvider>
   );
 }

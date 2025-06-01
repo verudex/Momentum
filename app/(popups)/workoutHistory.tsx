@@ -3,16 +3,26 @@ import { useRouter } from "expo-router";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useDisableBack } from "../../hooks/useDisableBack";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
 
 const DietTracking = () => {
-  useDisableBack();
-  
   return (
     <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
-      
-      <Text className="text-5xl text-dark-200 font-bold mb-6 text-center">Diet Tracking</Text>
-
+      <View style={styles.innerWrapper}>
+        <Animated.Text 
+        entering={FadeInUp.duration(500).springify()}
+        style={styles.title}
+        >
+            Workout History
+        </Animated.Text>
+              
+        <Animated.Text 
+        entering={FadeInUp.delay(200).duration(500).springify()}
+        style={styles.subtitle}
+        >
+            Keep up the momentum!
+        </Animated.Text>
+      </View>
     </SafeAreaView>
   )
 }
@@ -37,10 +47,16 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: "center",
-    fontSize: 24,
+    fontSize: 45,
     fontWeight: "bold",
-    color: "#111827",
+    color: "rgb(57, 53, 53)",
     marginTop: 16,
+  },
+  subtitle: {
+    textAlign: "center",
+    fontSize: 23,
+    fontWeight: "bold",
+    color: "rgb(146, 136, 136)",
   },
   form: {
     marginTop: 24,

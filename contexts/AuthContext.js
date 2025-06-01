@@ -22,7 +22,9 @@ export function AuthProvider({ children }) {
       if (user) {
         router.replace("/(tabs)/home");
       } else {
-        router.replace("/login");
+        if (currentPath === "/" || currentPath === "/(auth)/login") {
+          router.replace("/login");
+        }
       }
     });
     return subscriber; // Unsubscribe on unmount

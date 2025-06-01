@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAssetPreload } from "../../hooks/useAssetPreload";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,13 +31,13 @@ const Login = () => {
     if (!email.includes("@")) {
       Alert.alert("Invalid Email", "Please enter a valid email address");
       return;
-  }
+    }
 
-  setIsLoading(true);
-      try {
+    setIsLoading(true);
+    try {
       await auth().signInWithEmailAndPassword(email, password);
       console.log("test");
-      // Successful login - AuthContext will handle redirection
+    // Successful login - AuthContext will handle redirection
     } catch (error) {
       console.error("Login error:", error);
       
@@ -56,11 +57,31 @@ const Login = () => {
           break;
         default:
           Alert.alert("Login Failed", error.message);
-      }
+        }
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Waits for assets to load before showing screen.
+  const assetsReady = useAssetPreload([
+    require('../../assets/images/MomentumLogo.png'),
+  ]);
+
+  if (!assetsReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'white',
+        }}
+      >
+        <ActivityIndicator size="large" color="#4F46E5" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}> 
@@ -71,14 +92,14 @@ const Login = () => {
         />
         
         <Animated.Text 
-          entering={FadeInUp.delay(200).duration(500).springify()}
+          entering={FadeInUp.delay(100).duration(500).springify()}
           style={styles.title}
         >
           Sign in to your account
         </Animated.Text>
 
         <View style={styles.form}>
-          <Animated.View entering={FadeInDown.delay(400).duration(1000).springify()}>
+          <Animated.View entering={FadeInDown.delay(200).duration(1000).springify()}>
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -90,7 +111,7 @@ const Login = () => {
           </Animated.View>
 
           <Animated.View 
-            entering={FadeInDown.delay(600).duration(1000).springify()}
+            entering={FadeInDown.delay(300).duration(1000).springify()}
             style={styles.inputWrapper}
           >
             <TextInput
@@ -110,7 +131,7 @@ const Login = () => {
             </TouchableOpacity>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(800).duration(1000).springify()}>
+          <Animated.View entering={FadeInDown.delay(400).duration(1000).springify()}>
             <TouchableOpacity
               disabled={isInvalid || isLoading}
               onPress={handleLogin}
@@ -125,14 +146,14 @@ const Login = () => {
           </Animated.View>
         </View>
 
-        <Animated.View entering={FadeInDown.delay(1000).duration(1000).springify()}>
+        <Animated.View entering={FadeInDown.delay(500).duration(1000).springify()}>
           <TouchableOpacity>
             <Text style={styles.forgot}>Forgot password?</Text>
           </TouchableOpacity>
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(1200).duration(1000).springify()} 
+          entering={FadeInDown.delay(600).duration(1000).springify()} 
           style={styles.loginRow}
         >
           <Text style={styles.loginText}>Don't have an account? </Text>
@@ -142,7 +163,7 @@ const Login = () => {
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(1400).duration(1000).springify()}
+          entering={FadeInDown.delay(700).duration(1000).springify()}
           style={styles.dividerWrapper}
         >
           <View style={styles.divider} />
@@ -151,7 +172,7 @@ const Login = () => {
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(1600).duration(1000).springify()} 
+          entering={FadeInDown.delay(800).duration(1000).springify()} 
           style={styles.googleWrapper}
         >
           <TouchableOpacity style={styles.googleButton}>

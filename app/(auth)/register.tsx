@@ -1,5 +1,6 @@
 // import { auth } from '../../firebaseConfig'
 import React, { useState, useEffect, useContext } from "react";
+import { useAssetPreload } from "../../hooks/useAssetPreload";
 import { AuthContext } from "../../contexts/AuthContext";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useRouter } from "expo-router";
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
@@ -25,7 +27,7 @@ import auth from '@react-native-firebase/auth';
 
 
 const Register = () => {
-const { user, initializing } = useContext(AuthContext);
+  const { user, initializing } = useContext(AuthContext);
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -35,16 +37,16 @@ const { user, initializing } = useContext(AuthContext);
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const isInvalid = !username || !email || !password || !confirmPassword || !email.includes("@") || password !== confirmPassword;
+  const isInvalid = !username || !email || !password || !confirmPassword;
 
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
-  // useEffect(() => {
-  //   if (user && !initializing) {
-  //     router.replace("/(tabs)/home");
-  //   }
-  // }, [user, initializing]);
+  useEffect(() => {
+    if (user && !initializing) {
+      router.replace("/(tabs)/home");
+    }
+  }, [user, initializing]);
 
   // Configure Google Sign-In webclient Id
   useEffect(() => {
@@ -75,27 +77,26 @@ const { user, initializing } = useContext(AuthContext);
 
     // Navigate to home
     console.log("Firebase sign-in successful");
-    //router.replace("/(tabs)/home");
+    router.replace("/(tabs)/home");
 
 
-  } catch (error) {
-    console.error("Google Sign-In error:", error);
+    } catch (error) {
+      console.error("Google Sign-In error:", error);
 
-    if (isErrorWithCode(error)) {
-      switch (error.code) {
-        case statusCodes.IN_PROGRESS:
-          console.warn("Sign-in already in progress");
-          break;
-        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-          console.warn("Play Services not available or outdated");
-          break;
-        default:
-          console.warn("Unhandled error:", error.message);
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            console.warn("Sign-in already in progress");
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            console.warn("Play Services not available or outdated");
+            break;
+          default:
+            console.warn("Unhandled error:", error.message);
+        }
       }
     }
-  }
-};
-
+  };
 
   const handleRegister = async () => {
     // Clear previous errors
@@ -118,22 +119,42 @@ const { user, initializing } = useContext(AuthContext);
         email, 
         password
       );
-      // router.replace("/(tabs)/home");
-      } catch (error) {
+      router.replace("/(tabs)/home");
+    } catch (error) {
       console.error('Registration error:', error);
     
-    // Handle specific errors
-    if (error.code === 'auth/email-already-in-use') {
-      setEmailError('That email address is already in use!');
-    } else if (error.code === 'auth/invalid-email') {
-      setEmailError('That email address is invalid!');
-    } else if (error.code === 'auth/weak-password') {
-      setPasswordError('Password should be at least 6 characters');
-    }
+      // Handle specific errors
+      if (error.code === 'auth/email-already-in-use') {
+        setEmailError('That email address is already in use!');
+      } else if (error.code === 'auth/invalid-email') {
+        setEmailError('That email address is invalid!');
+      } else if (error.code === 'auth/weak-password') {
+        setPasswordError('Password should be at least 6 characters');
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Waits for assets to load before showing screen.
+  const assetsReady = useAssetPreload([
+    require('../../assets/images/MomentumLogo.png'),
+  ]);
+
+  if (!assetsReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'white',
+        }}
+      >
+        <ActivityIndicator size="large" color="#4F46E5" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}> 
@@ -144,7 +165,7 @@ const { user, initializing } = useContext(AuthContext);
         />
 
         <Animated.Text 
-          entering={FadeInUp.delay(200).duration(500).springify()}
+          entering={FadeInUp.delay(100).duration(500).springify()}
           style={styles.title}
         >
           Register a new account
@@ -152,7 +173,7 @@ const { user, initializing } = useContext(AuthContext);
 
         <View style={styles.form}>
           <Animated.View 
-            entering={FadeInDown.delay(400).duration(1000).springify()}
+            entering={FadeInDown.delay(200).duration(1000).springify()}
             style={styles.inputWrapper}
           >
             <TextInput
@@ -171,7 +192,7 @@ const { user, initializing } = useContext(AuthContext);
           </Animated.View>
 
           <Animated.View 
-            entering={FadeInDown.delay(600).duration(1000).springify()}
+            entering={FadeInDown.delay(300).duration(1000).springify()}
             style={styles.inputWrapper}
           >
             <TextInput
@@ -183,7 +204,7 @@ const { user, initializing } = useContext(AuthContext);
           </Animated.View>
 
           <Animated.View 
-            entering={FadeInDown.delay(800).duration(1000).springify()}
+            entering={FadeInDown.delay(400).duration(1000).springify()}
             style={styles.inputWrapper}
           >
             <TextInput
@@ -209,7 +230,7 @@ const { user, initializing } = useContext(AuthContext);
           </Animated.View>
 
           <Animated.View 
-            entering={FadeInDown.delay(1000).duration(1000).springify()}
+            entering={FadeInDown.delay(500).duration(1000).springify()}
             style={styles.inputWrapper}
           >
             <TextInput
@@ -233,21 +254,23 @@ const { user, initializing } = useContext(AuthContext);
             {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(1200).duration(1000).springify()}>
+          <Animated.View entering={FadeInDown.delay(600).duration(1000).springify()}>
             <TouchableOpacity
-              disabled={isLoading}
+              disabled={isInvalid || isLoading}
               onPress={handleRegister}
-              style={[styles.registerButton]}
+              style={[styles.registerButton, (isInvalid || isLoading) && styles.disabled]}
             >
-              <Text style={styles.registerButtonText}>
-                {isLoading ? 'Registering...' : 'Register'}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.registerButtonText}>Register</Text>
+              )}
             </TouchableOpacity>
           </Animated.View>
         </View>
 
         <Animated.View 
-          entering={FadeInDown.delay(1400).duration(1000).springify()}
+          entering={FadeInDown.delay(700).duration(1000).springify()}
           style={styles.loginRow}
         >
           <Text style={styles.loginText}>Already have an account? </Text>
@@ -257,7 +280,7 @@ const { user, initializing } = useContext(AuthContext);
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(1600).duration(1000).springify()}
+          entering={FadeInDown.delay(800).duration(1000).springify()}
           style={styles.dividerWrapper}
         >
           <View style={styles.divider} />
@@ -266,7 +289,7 @@ const { user, initializing } = useContext(AuthContext);
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(1800).duration(1000).springify()}
+          entering={FadeInDown.delay(900).duration(1000).springify()}
           style={styles.googleWrapper}
         >
           {/* <TouchableOpacity style={styles.googleButton}>
@@ -309,7 +332,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   form: {
-    marginTop: 24,
+    marginTop: 20,
     gap: 20,
   },
   inputWrapper: {
@@ -373,7 +396,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 20,
+    marginVertical: 10,
   },
   divider: {
     flex: 1,
@@ -387,12 +410,12 @@ const styles = StyleSheet.create({
   },
   googleWrapper: {
     alignItems: "center",
-    paddingTop: 8,
+    paddingTop: 2,
   },
   googleButton: {
     width: "100%",
     backgroundColor: "#4F46E5",
-    paddingVertical: 16,
+    paddingVertical: 10,
     borderRadius: 12,
     alignItems: "center",
     shadowColor: "#000",
