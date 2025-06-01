@@ -17,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 import auth from '@react-native-firebase/auth';
 
 const Login = () => {
+  const router = useRouter();
   const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
