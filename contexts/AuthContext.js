@@ -15,28 +15,11 @@ export function AuthProvider({ children }) {
   const [initializing, setInitializing] = useState(true);
   const [signInMethod, setSignInMethod] = useState(null);
 
-//   useEffect(() => {
-//     const subscriber = auth().onAuthStateChanged((user) => {
-//       setUser(user);
-//       if (initializing) setInitializing(false);
-      
-//       // Handle navigation inside the provider
-//       if (user) {
-//         router.replace("/(tabs)/home");
-//       } else {
-//         if (currentPath === "/" || currentPath === "/(auth)/login") {
-//           router.replace("/login");
-//         }
-//       }
-//     });
-//     return subscriber; // Unsubscribe on unmount
-//   }, [initializing, router]); // Add router to dependencies
-
 useEffect(() => {
     const subscriber = auth().onAuthStateChanged((authUser) => {
       setUser(authUser);
       if (initializing) setInitializing(false);
-      if (user) router.replace("/(tabs)/home");
+      if (authUser) router.replace("/(tabs)/home");
     });
     return subscriber;
   }, [initializing, router]);
