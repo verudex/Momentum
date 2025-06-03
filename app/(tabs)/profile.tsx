@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, } from 'react';
 import { AuthContext } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
@@ -6,25 +6,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useDisableBack } from "../../hooks/useDisableBack";
 import auth from '@react-native-firebase/auth';
+import { signOut } from "../../utils/signIn_Out";
+
 
 const Profile = () => {
   useDisableBack();
-  const { user } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    console.log(user);
     setIsLoggingOut(true);
-    try {
-      await auth().signOut();
-      Alert.alert("Success", "You have been logged out successfully");
-      router.replace("/");
-    } catch (error) {
-      console.error("Logout error:", error);
-      Alert.alert("Error", "Failed to logout. Please try again.");
-    } finally {
-      setIsLoggingOut(false);
-    }
+    await signOut(); // From utils
+    setIsLoggingOut(false);
+    router.replace("/");
+    setUser(null);
   };
 
 

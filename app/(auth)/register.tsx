@@ -1,4 +1,3 @@
-// import { auth } from '../../firebaseConfig'
 import React, { useState, useEffect, useContext } from "react";
 import { useAssetPreload } from "../../hooks/useAssetPreload";
 import { AuthContext } from "../../contexts/AuthContext";
@@ -23,11 +22,10 @@ import {
   GoogleSigninButton,
 } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
-
-
+import { googleSignIn } from "../../utils/signIn_Out";
 
 const Register = () => {
-  const { user, initializing, setSignInMethod } = useContext(AuthContext);
+  const { user, initializing, signInMethod } = useContext(AuthContext);
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -42,11 +40,11 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
-  useEffect(() => {
-    if (user && !initializing) {
-      router.replace("/(tabs)/home");
-    }
-  }, [user, initializing]);
+  // useEffect(() => {
+  //   if (user && !initializing) {
+  //     router.replace("/(tabs)/home");
+  //   }
+  // }, [user, initializing]);
 
   // Configure Google Sign-In webclient Id
   useEffect(() => {
@@ -56,50 +54,18 @@ const Register = () => {
   }, []);
 
   // Google Sign-In Logic
-  const signIn = async () => {
-    try {
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  const handleGoogleSignIn = async () => {
+    console.log(user);
+    const result = await googleSignIn();
 
-    const { idToken } = await GoogleSignin.getTokens();
-    //const { idToken } = await GoogleSignin.signIn()
-
-    if (!idToken) {
-      throw new Error('No ID token found');
-    }
-
-    // Create a Google credential with the token
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-
-    // Sign in the user with the credential
-    const userCredential = await auth().signInWithCredential(googleCredential);
-
-    // Track sign-in method
-    setSignInMethod('google');
-
-
-    // Navigate to home
-    console.log("Firebase sign-in successful");
-    router.replace("/(tabs)/home");
-
-
-    } catch (error) {
-      console.error("Google Sign-In error:", error);
-
-      if (isErrorWithCode(error)) {
-        switch (error.code) {
-          case statusCodes.IN_PROGRESS:
-            console.warn("Sign-in already in progress");
-            break;
-          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            console.warn("Play Services not available or outdated");
-            break;
-          default:
-            console.warn("Unhandled error:", error.message);
-        }
-      }
+    if (result.success) {
+      router.replace("/(tabs)/home");
+    } else if (!result.cancelled) {
+      alert("Google sign-in failed. Please try again.");
     }
   };
 
+  // Email Register Logic
   const handleRegister = async () => {
     // Clear previous errors
     setEmailError("");
@@ -121,7 +87,7 @@ const Register = () => {
         email, 
         password
       );
-      router.replace("/(tabs)/home");
+      if (user) router.replace("/(tabs)/home");
     } catch (error) {
       console.error('Registration error:', error);
     
@@ -300,7 +266,7 @@ const Register = () => {
           <GoogleSigninButton
             size={GoogleSigninButton.Size.Wide}
             color={GoogleSigninButton.Color.Dark}
-            onPress={signIn}
+            onPress={handleGoogleSignIn}
           />
         </Animated.View>
       </View>

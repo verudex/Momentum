@@ -16,16 +16,18 @@ export function AuthProvider({ children }) {
   const [signInMethod, setSignInMethod] = useState(null);
 
 useEffect(() => {
-    const subscriber = auth().onAuthStateChanged((authUser) => {
-      setUser(authUser);
+    const subscriber = auth().onAuthStateChanged((user) => {
+      setUser(user);
+      if (user) console.log(user);
       if (initializing) setInitializing(false);
-      if (authUser) router.replace("/(tabs)/home");
+      //if (authUser) router.replace("/(tabs)/home");
     });
     return subscriber;
   }, [initializing, router]);
 
   const value = {
     user,
+    setUser,
     initializing,
     signInMethod,
     setSignInMethod,

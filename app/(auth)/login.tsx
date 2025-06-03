@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useAssetPreload } from "../../hooks/useAssetPreload";
+import { AuthContext } from "../../contexts/AuthContext";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,15 +17,35 @@ import {
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import auth from '@react-native-firebase/auth';
+import {
+  GoogleSignin,
+  statusCodes,
+  isErrorWithCode,
+  GoogleSigninButton,
+} from '@react-native-google-signin/google-signin';
+import { googleSignIn } from "../../utils/signIn_Out";
 
 const Login = () => {
   const router = useRouter();
+  const { user, initializing, signInMethod } = useContext(AuthContext);
   const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const isInvalid = !email || !password;
+
+  // Google Sign-In Logic (same as in register)
+  const handleGoogleSignIn = async () => {
+    console.log(user);
+    const result = await googleSignIn();
+
+    if (result.success) {
+      router.replace("/(tabs)/home");
+    } else if (!result.cancelled) {
+      alert("Google sign-in failed. Please try again.");
+    }
+  };
 
   // If email is invalid
   const handleLogin = async () => {
@@ -175,7 +196,10 @@ const Login = () => {
           entering={FadeInDown.delay(800).duration(1000).springify()} 
           style={styles.googleWrapper}
         >
-          <TouchableOpacity style={styles.googleButton}>
+          <TouchableOpacity 
+            style={styles.googleButton}
+            onPress={handleGoogleSignIn}
+          >
             <Text style={styles.googleButtonText}>Sign in with Google</Text>
           </TouchableOpacity>
         </Animated.View>
