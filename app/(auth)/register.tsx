@@ -24,8 +24,9 @@ import {
 import auth from '@react-native-firebase/auth';
 import { googleSignIn } from "../../utils/signIn_Out";
 
+
 const Register = () => {
-  const { user, initializing, signInMethod } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -56,7 +57,7 @@ const Register = () => {
   // Google Sign-In Logic
   const handleGoogleSignIn = async () => {
     console.log(user);
-    const result = await googleSignIn();
+    const result = await googleSignIn(setUser);
 
     if (result.success) {
       router.replace("/(tabs)/home");
@@ -66,7 +67,7 @@ const Register = () => {
   };
 
   // Email Register Logic
-  const handleRegister = async () => {
+  const handleEmailRegister = async () => {
     // Clear previous errors
     setEmailError("");
     setPasswordError("");
@@ -83,14 +84,14 @@ const Register = () => {
     
     setIsLoading(true);
     try {
-      await auth().createUserWithEmailAndPassword(
+      const userCredential = await auth().createUserWithEmailAndPassword(
         email, 
         password
       );
-      if (user) router.replace("/(tabs)/home");
-    } catch (error) {
-      console.error('Registration error:', error);
-    
+      setUser(userCredential.user);
+      router.replace("/(tabs)/home");
+    } catch (error: any) {
+
       // Handle specific errors
       if (error.code === 'auth/email-already-in-use') {
         setEmailError('That email address is already in use!');
@@ -225,7 +226,7 @@ const Register = () => {
           <Animated.View entering={FadeInDown.delay(600).duration(1000).springify()}>
             <TouchableOpacity
               disabled={isInvalid || isLoading}
-              onPress={handleRegister}
+              onPress={handleEmailRegister}
               style={[styles.registerButton, (isInvalid || isLoading) && styles.disabled]}
             >
               {isLoading ? (

@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useDisableBack } from "../../hooks/useDisableBack";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
+import auth from '@react-native-firebase/auth';
+import { AuthContext } from "../../contexts/AuthContext";
+
 
 const WorkoutTracking = () => {
   useDisableBack();
   const router = useRouter();
+  const { user } = useContext(AuthContext);
   const [workoutName, setWorkoutName] = useState("");
   const [duration, setDuration] = useState("");
   const [sets, setSets] = useState("");
@@ -45,7 +49,10 @@ const WorkoutTracking = () => {
           >
             <TouchableOpacity 
               style={styles.historyButton}
-              onPress={() => router.push("/(popups)/workoutHistory")}
+              onPress={() => {
+                console.log(user)
+                router.push("/(popups)/workoutHistory")}
+              }
             >
               <Text style={styles.historyButtonText}>View workout history</Text>
             </TouchableOpacity>

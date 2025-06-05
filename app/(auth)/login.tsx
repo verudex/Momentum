@@ -23,11 +23,11 @@ import {
   isErrorWithCode,
   GoogleSigninButton,
 } from '@react-native-google-signin/google-signin';
-import { googleSignIn } from "../../utils/signIn_Out";
+import { googleSignIn, signIn } from "../../utils/signIn_Out";
 
 const Login = () => {
   const router = useRouter();
-  const { user, initializing, signInMethod } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +38,7 @@ const Login = () => {
   // Google Sign-In Logic (same as in register)
   const handleGoogleSignIn = async () => {
     console.log(user);
-    const result = await googleSignIn();
+    const result = await googleSignIn(setUser);
 
     if (result.success) {
       router.replace("/(tabs)/home");
@@ -53,35 +53,9 @@ const Login = () => {
       Alert.alert("Invalid Email", "Please enter a valid email address");
       return;
     }
-
     setIsLoading(true);
-    try {
-      await auth().signInWithEmailAndPassword(email, password);
-      console.log("test");
-    // Successful login - AuthContext will handle redirection
-    } catch (error) {
-      console.error("Login error:", error);
-      
-      // Handle specific error cases
-      switch (error.code) {
-        case 'auth/invalid-email':
-          Alert.alert("Invalid Email", "The email address is badly formatted");
-          break;
-        case 'auth/user-not-found':
-          Alert.alert("Account Not Found", "No user found with this email");
-          break;
-        case 'auth/wrong-password':
-          Alert.alert("Wrong Password", "Incorrect password for this account");
-          break;
-        case 'auth/too-many-requests':
-          Alert.alert("Access Blocked", "Too many failed attempts. Try again later or reset your password");
-          break;
-        default:
-          Alert.alert("Login Failed", error.message);
-        }
-    } finally {
-      setIsLoading(false);
-    }
+    await signIn(email, password, setUser);
+    setIsLoading(false);
   };
 
   // Waits for assets to load before showing screen.

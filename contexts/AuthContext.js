@@ -7,6 +7,7 @@ export const AuthContext = createContext({
   user: null,
   initializing: true,
   signInMethod: null,
+  setUser: (user) => {},
 });
 
 export function AuthProvider({ children }) {

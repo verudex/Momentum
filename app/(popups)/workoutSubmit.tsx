@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
 import auth from "@react-native-firebase/auth";
-import { getFirestore, collection, doc, addDoc, serverTimestamp } from "@react-native-firebase/firestore";
-import { getApp } from '@react-native-firebase/app';
+import firestore from "@react-native-firebase/firestore";
+import { AuthContext } from "../../contexts/AuthContext";
+import { addWorkoutData } from "../../utils/userFirestore";
 
 const WorkoutSubmit = () => {
   const [workoutName, setWorkoutName] = useState("");
@@ -14,42 +15,24 @@ const WorkoutSubmit = () => {
   const [sets, setSets] = useState("");
   const [reps, setReps] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useContext(AuthContext);
 
   const isInvalid = !workoutName;
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    const uid = auth().currentUser?.uid;
-    if (!uid) {
+    if (user == null) {
       Alert.alert("Error", "User not logged in.");
       return;
     }
-
-    try {
-      const app = getApp(); // 👈 This gets the default Firebase app instance
-      const db = getFirestore(app); // 👈 Get Firestore instance tied to that app
-
-      await addDoc(
-        collection(doc(collection(db, "users"), uid), "workouts"),
-        {
-          name: workoutName,
-          duration: duration || null,
-          sets: sets || null,
-          reps: reps || null,
-          timestamp: serverTimestamp(),
-        }
-      );
-
-      Alert.alert("Workout successfully recorded!");
-      setWorkoutName("");
-      setDuration("");
-      setSets("");
-      setReps("");
-    } catch (error) {
-      Alert.alert("Error", "Problem saving workout");
-    } finally {
-      setIsLoading(false);
-    }
+    //await addWorkoutData(user.uid, workoutName, duration, sets, reps);
+    const userDocument = await firestore().collection('Users').doc('HSBGofcz7td0QgqJ9Ntn').get();
+    console.log(userDocument);
+    setWorkoutName("");
+    setDuration("");
+    setReps("");
+    setSets("");
+    setIsLoading(false);
   };
   
   return (

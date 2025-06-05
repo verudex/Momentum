@@ -18,7 +18,7 @@ const Profile = () => {
   const handleLogout = async () => {
     console.log(user);
     setIsLoggingOut(true);
-    await signOut(); // From utils
+    await signOut(setUser); // From utils
     setIsLoggingOut(false);
     router.replace("/");
     setUser(null);
