@@ -9,83 +9,72 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
   StyleSheet,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
-import auth from '@react-native-firebase/auth';
 import {
   GoogleSignin,
-  statusCodes,
-  isErrorWithCode,
   GoogleSigninButton,
-} from '@react-native-google-signin/google-signin';
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 import { googleSignIn, signIn } from "../../utils/signIn_Out";
 
 const Login = () => {
+  const { setUser } = useContext(AuthContext);
   const router = useRouter();
-  const { user, setUser } = useContext(AuthContext);
-  const [email, setEmail] = useState(""); 
+
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const isInvalid = !email || !password;
 
-  // Google Sign-In Logic (same as in register)
   const handleGoogleSignIn = async () => {
     const result = await googleSignIn(setUser);
-
     if (result.success) {
       router.replace("/(tabs)/home");
     } else if (!result.cancelled) {
-      alert("Google sign-in failed. Please try again.");
+      Alert.alert("Google Sign-In Failed", "Please try again.");
     }
   };
 
-  // If email is invalid
   const handleLogin = async () => {
     if (!email.includes("@")) {
       Alert.alert("Invalid Email", "Please enter a valid email address");
       return;
     }
+
     setIsLoading(true);
     await signIn(email, password, setUser);
     setIsLoading(false);
   };
 
-  // Waits for assets to load before showing screen.
   const assetsReady = useAssetPreload([
-    require('../../assets/images/MomentumLogo.png'),
+    require("../../assets/images/MomentumLogo.png"),
   ]);
 
   if (!assetsReady) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'white',
-        }}
-      >
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}> 
+    <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}>
       <View style={styles.innerWrapper}>
-        <Animated.Image 
+        <Animated.Image
           entering={FadeInUp.duration(500).springify()}
-          style={styles.logo} source={require("../../assets/images/MomentumLogo.png")} 
+          style={styles.logo}
+          source={require("../../assets/images/MomentumLogo.png")}
         />
-        
-        <Animated.Text 
+
+        <Animated.Text
           entering={FadeInUp.delay(100).duration(500).springify()}
           style={styles.title}
         >
@@ -104,7 +93,7 @@ const Login = () => {
             />
           </Animated.View>
 
-          <Animated.View 
+          <Animated.View
             entering={FadeInDown.delay(300).duration(1000).springify()}
             style={styles.inputWrapper}
           >
@@ -113,8 +102,8 @@ const Login = () => {
               placeholder="Password"
               secureTextEntry={!showPassword}
               autoCapitalize="none"
-              autoComplete="current-password"
-              onChangeText={(pw) => setPassword(pw)}
+              onChangeText={setPassword}
+              value={password}
             />
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
@@ -146,17 +135,17 @@ const Login = () => {
           </TouchableOpacity>
         </Animated.View>
 
-        <Animated.View 
-          entering={FadeInDown.delay(600).duration(1000).springify()} 
+        <Animated.View
+          entering={FadeInDown.delay(600).duration(1000).springify()}
           style={styles.loginRow}
         >
           <Text style={styles.loginText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/register")}> 
+          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
             <Text style={styles.loginLink}>Register</Text>
           </TouchableOpacity>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(700).duration(1000).springify()}
           style={styles.dividerWrapper}
         >
@@ -165,21 +154,22 @@ const Login = () => {
           <View style={styles.divider} />
         </Animated.View>
 
-        <Animated.View 
-          entering={FadeInDown.delay(800).duration(1000).springify()} 
+        <Animated.View
+          entering={FadeInDown.delay(800).duration(1000).springify()}
           style={styles.googleWrapper}
         >
-          <TouchableOpacity 
-            style={styles.googleButton}
+          <GoogleSigninButton
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Dark}
             onPress={handleGoogleSignIn}
-          >
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
+          />
         </Animated.View>
       </View>
     </SafeAreaView>
   );
 };
+
+export default Login;
 
 const styles = StyleSheet.create({
   container: {
@@ -221,25 +211,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D1D5DB",
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  passwordRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  forgot: {
-    fontSize: 14,
-    textAlign: "center",
-    fontWeight: "600",
-    color: "#4F46E5",
-    paddingTop: 8,
-  },
   eyeIcon: {
     position: "absolute",
     right: 12,
@@ -263,6 +234,13 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
+  },
+  forgot: {
+    fontSize: 14,
+    textAlign: "center",
+    fontWeight: "600",
+    color: "#4F46E5",
+    paddingTop: 8,
   },
   loginRow: {
     flexDirection: "row",
@@ -298,23 +276,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 8,
   },
-  googleButton: {
-    width: "100%",
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  googleButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
+    backgroundColor: "white",
   },
 });
-
-export default Login;

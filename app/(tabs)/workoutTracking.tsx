@@ -1,29 +1,15 @@
-import React, { useState, useContext } from "react";
+import React from "react";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useDisableBack } from "../../hooks/useDisableBack";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
-import auth from '@react-native-firebase/auth';
-import { AuthContext } from "../../contexts/AuthContext";
 
 
 const WorkoutTracking = () => {
   useDisableBack();
   const router = useRouter();
-  const { user } = useContext(AuthContext);
-  const [workoutName, setWorkoutName] = useState("");
-  const [duration, setDuration] = useState("");
-  const [sets, setSets] = useState("");
-  const [reps, setReps] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const isInvalid = !workoutName;
-
-  const handleSubmit = async () => {
-
-  }
   
   return (
     <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>

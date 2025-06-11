@@ -1,49 +1,72 @@
 import { Alert } from "react-native";
-import { useContext } from "react";
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import auth from '@react-native-firebase/auth';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithCredential,
+  GoogleAuthProvider,
+  signOut as firebaseSignOut,
+  User
+} from "firebase/auth";
+import { app } from "./firebaseConfig";
 import { router } from "expo-router";
-import { AuthContext } from "../contexts/AuthContext";
 import { createUserProfile } from "./userFirestore";
 
-// Helper function to handle Firebase auth errors
+// Get modular Firebase Auth instance
+const auth = getAuth(app);
+
+// 🔒 Handle Firebase Auth errors
 const handleAuthError = (error: any) => {
   console.error("Auth error:", error);
   switch (error.code) {
+    case 'auth/email-already-in-use':
+      Alert.alert("Email In Use", "That email address is already in use!");
+      break;
     case 'auth/invalid-email':
-      Alert.alert("Invalid Email", "The email address is badly formatted");
+      Alert.alert("Invalid Email", "The email address is badly formatted.");
       break;
     case 'auth/user-not-found':
-      Alert.alert("Account Not Found", "No user found with this email");
+      Alert.alert("Account Not Found", "No user found with this email.");
       break;
     case 'auth/wrong-password':
-      Alert.alert("Wrong Password", "Incorrect password for this account");
+      Alert.alert("Wrong Password", "Incorrect password for this account.");
+      break;
+    case 'auth/weak-password':
+      Alert.alert("Weak Password", "Password should be at least 6 characters.");
       break;
     case 'auth/too-many-requests':
-      Alert.alert("Access Blocked", "Too many failed attempts. Try again later or reset your password");
+      Alert.alert("Access Blocked", "Too many failed attempts. Try again later or reset your password.");
       break;
     default:
-      Alert.alert("Error", error.message || "An unknown error occurred");
+      Alert.alert("Error", error.message || "An unknown error occurred.");
   }
 };
 
-//Google Sign-In
-export const googleSignIn = async (setUser: (user: any) => void) => {
+//
+// ✅ Google Sign-In
+//
+export const googleSignIn = async (setUser: (user: User) => void) => {
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-    // Trigger Google Sign-In flow
     const userInfo = await GoogleSignin.signIn();
     const { idToken } = await GoogleSignin.getTokens();
 
     if (!idToken) throw new Error('No ID token found');
 
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+    const googleCredential = GoogleAuthProvider.credential(idToken);
+    const userCredential = await signInWithCredential(auth, googleCredential);
 
-    const userCredential = await auth().signInWithCredential(googleCredential);
+    setUser(userCredential.user);
+    if (!userCredential.user.email) {
+      throw new Error("Google account did not return an email.");
+    }
 
-    setUser(userCredential.user); // Stores user data locally
-    createUserProfile(userCredential.user); // Creates a database for the user
+    await createUserProfile({
+      uid: userCredential.user.uid,
+      email: userCredential.user.email,
+    });
 
     return {
       success: true,
@@ -62,49 +85,67 @@ export const googleSignIn = async (setUser: (user: any) => void) => {
   }
 };
 
-//Email Register
-// export const emailRegister = async (email: string, password: string, setUser: (user: any) => void) => {
-//   try {
-//       await auth().createUserWithEmailAndPassword(
-//         email, 
-//         password
-//       );
-//     } catch (error: any) {
-//       console.error('Registration error:', error);
-    
-//       // Handle specific errors
-//       if (error.code === 'auth/email-already-in-use') {
-//         setEmailError('That email address is already in use!');
-//       } else if (error.code === 'auth/invalid-email') {
-//         setEmailError('That email address is invalid!');
-//       } else if (error.code === 'auth/weak-password') {
-//         setPasswordError('Password should be at least 6 characters');
-//       }
-//     }
-// }
-
-// Email Sign-In
-export const signIn = async (email: string, password: string, setUser: (user: any) => void) => {  
+//
+// ✅ Email Sign-In
+//
+export const signIn = async (
+  email: string,
+  password: string,
+  setUser: (user: User) => void
+) => {
   try {
-    const userCredential = await auth().signInWithEmailAndPassword(email, password);
-    setUser(userCredential.user); // Update context
-    createUserProfile(userCredential.user);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    setUser(userCredential.user);
+    if (!userCredential.user.email) {
+      throw new Error("Google account did not return an email.");
+    }
+
+    await createUserProfile({
+      uid: userCredential.user.uid,
+      email: userCredential.user.email,
+    });
     router.replace("/(tabs)/home");
   } catch (error) {
     handleAuthError(error);
   }
 };
 
+//
+// ✅ Email Register
+//
+export const emailRegister = async (
+  email: string,
+  password: string,
+  setUser: (user: User) => void
+) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    setUser(userCredential.user);
+    if (!userCredential.user.email) {
+      throw new Error("Google account did not return an email.");
+    }
 
-// Sign-Out (Handles both Google and email/password)
+    await createUserProfile({
+      uid: userCredential.user.uid,
+      email: userCredential.user.email,
+    });
+    router.replace("/(tabs)/home");
+  } catch (error) {
+    handleAuthError(error);
+  }
+};
+
+//
+// ✅ Sign-Out (Google or Email)
+//
 export const signOut = async (setUser: (user: null) => void) => {
   try {
-    await auth().signOut();
-    await GoogleSignin.signOut(); // Only relevant if user signed in with Google
-    setUser(null); // Clear user from context
+    await firebaseSignOut(auth);
+    await GoogleSignin.signOut(); // optional: only if user signed in with Google
+    setUser(null);
     Alert.alert("Success", "You have been logged out");
   } catch (error) {
-    Alert.alert("Error", "Failed to logout. Please try again.");
     console.error(error);
+    Alert.alert("Error", "Failed to logout. Please try again.");
   }
 };

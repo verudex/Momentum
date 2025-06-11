@@ -1,9 +1,10 @@
 import React, { createContext, useEffect, useState, ReactNode } from "react";
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { useRouter } from "expo-router";
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { app } from "../utils/firebaseConfig";
 
-// Define user type from Firebase
-type FirebaseUser = FirebaseAuthTypes.User | null;
+// Define user type from Web SDK
+type FirebaseUser = User | null;
 
 // Context shape
 interface AuthContextType {
@@ -14,7 +15,7 @@ interface AuthContextType {
   setSignInMethod: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-// Provide default values that match the type
+// Provide default values
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   setUser: () => null,
@@ -23,24 +24,24 @@ export const AuthContext = createContext<AuthContextType>({
   setSignInMethod: () => null,
 });
 
-// Props for AuthProvider
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
-
   const [user, setUser] = useState<FirebaseUser>(null);
   const [initializing, setInitializing] = useState(true);
   const [signInMethod, setSignInMethod] = useState<string | null>(null);
 
   useEffect(() => {
-    const subscriber = auth().onAuthStateChanged((user) => {
-      setUser(user); // ✅ Now properly typed
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       if (initializing) setInitializing(false);
     });
-    return subscriber;
+
+    return unsubscribe;
   }, [initializing]);
 
   const value: AuthContextType = {
@@ -51,9 +52,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSignInMethod,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

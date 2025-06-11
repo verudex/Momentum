@@ -21,8 +21,9 @@ import {
   isErrorWithCode,
   GoogleSigninButton,
 } from '@react-native-google-signin/google-signin';
-import auth from '@react-native-firebase/auth';
-import { googleSignIn } from "../../utils/signIn_Out";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { app } from "../../utils/firebaseConfig";
+import { googleSignIn, emailRegister } from "../../utils/signIn_Out";
 import { dataTest } from "../../utils/userFirestore";
 
 
@@ -40,13 +41,6 @@ const Register = () => {
   const isInvalid = !username || !email || !password || !confirmPassword;
 
   const [isLoading, setIsLoading] = useState(false);
-
-  // Redirect if already logged in
-  // useEffect(() => {
-  //   if (user && !initializing) {
-  //     router.replace("/(tabs)/home");
-  //   }
-  // }, [user, initializing]);
 
   // Configure Google Sign-In webclient Id
   useEffect(() => {
@@ -66,43 +60,23 @@ const Register = () => {
     }
   };
 
-  // Email Register Logic
   const handleEmailRegister = async () => {
-    // Clear previous errors
     setEmailError("");
     setPasswordError("");
 
-    // Client-side validation
     if (!email.includes("@")) {
       setEmailError("Please enter a valid email");
       return;
     }
+
     if (password !== confirmPassword) {
       setPasswordError("Passwords don't match");
       return;
     }
-    
-    setIsLoading(true);
-    try {
-      const userCredential = await auth().createUserWithEmailAndPassword(
-        email, 
-        password
-      );
-      setUser(userCredential.user);
-      router.replace("/(tabs)/home");
-    } catch (error: any) {
 
-      // Handle specific errors
-      if (error.code === 'auth/email-already-in-use') {
-        setEmailError('That email address is already in use!');
-      } else if (error.code === 'auth/invalid-email') {
-        setEmailError('That email address is invalid!');
-      } else if (error.code === 'auth/weak-password') {
-        setPasswordError('Password should be at least 6 characters');
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(true);
+    await emailRegister(email, password, setUser);
+    setIsLoading(false);
   };
 
   // Waits for assets to load before showing screen.
@@ -226,8 +200,7 @@ const Register = () => {
           <Animated.View entering={FadeInDown.delay(600).duration(1000).springify()}>
             <TouchableOpacity
               disabled={isInvalid || isLoading}
-              //onPress={handleEmailRegister}
-              onPress={dataTest}
+              onPress={handleEmailRegister}
               style={[styles.registerButton, (isInvalid || isLoading) && styles.disabled]}
             >
               {isLoading ? (
@@ -262,9 +235,6 @@ const Register = () => {
           entering={FadeInDown.delay(900).duration(1000).springify()}
           style={styles.googleWrapper}
         >
-          {/* <TouchableOpacity style={styles.googleButton}>
-            <Text style={styles.googleButtonText}>Sign up with Google</Text>
-          </TouchableOpacity> */}
           <GoogleSigninButton
             size={GoogleSigninButton.Size.Wide}
             color={GoogleSigninButton.Color.Dark}
