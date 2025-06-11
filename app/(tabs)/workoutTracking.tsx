@@ -50,7 +50,6 @@ const WorkoutTracking = () => {
             <TouchableOpacity 
               style={styles.historyButton}
               onPress={() => {
-                console.log(user)
                 router.push("/(popups)/workoutHistory")}
               }
             >

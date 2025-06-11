@@ -37,7 +37,6 @@ const Login = () => {
 
   // Google Sign-In Logic (same as in register)
   const handleGoogleSignIn = async () => {
-    console.log(user);
     const result = await googleSignIn(setUser);
 
     if (result.success) {
