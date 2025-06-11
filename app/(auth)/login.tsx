@@ -17,12 +17,7 @@ import {
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import auth from '@react-native-firebase/auth';
-import {
-  GoogleSignin,
-  statusCodes,
-  isErrorWithCode,
-  GoogleSigninButton,
-} from '@react-native-google-signin/google-signin';
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { googleSignIn, signIn } from "../../utils/signIn_Out";
 
 const Login = () => {
@@ -32,6 +27,11 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Waits for assets to load before showing screen.
+  const assetsReady = useAssetPreload([
+    require('../../assets/images/MomentumLogo.png'),
+  ]);
 
   const isInvalid = !email || !password;
 
@@ -56,11 +56,6 @@ const Login = () => {
     await signIn(email, password, setUser);
     setIsLoading(false);
   };
-
-  // Waits for assets to load before showing screen.
-  const assetsReady = useAssetPreload([
-    require('../../assets/images/MomentumLogo.png'),
-  ]);
 
   if (!assetsReady) {
     return (
@@ -169,12 +164,11 @@ const Login = () => {
           entering={FadeInDown.delay(800).duration(1000).springify()} 
           style={styles.googleWrapper}
         >
-          <TouchableOpacity 
-            style={styles.googleButton}
+          <GoogleSigninButton
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Dark}
             onPress={handleGoogleSignIn}
-          >
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
+          />
         </Animated.View>
       </View>
     </SafeAreaView>

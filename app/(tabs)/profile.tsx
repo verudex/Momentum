@@ -1,7 +1,9 @@
 import { useContext, useEffect, useState, } from 'react';
 import { AuthContext } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { 
+  StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator, Image 
+        } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useDisableBack } from "../../hooks/useDisableBack";
@@ -27,150 +29,95 @@ const Profile = () => {
   return (
     <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
       
-      <Text className="text-5xl text-dark-200 font-bold mb-6 text-center">Profile</Text>
+      <Text style={styles.title}>Profile</Text>
 
-      {user?.email && (
-        <Text className="text-lg text-gray-600 mb-8">
-          Logged in as: {user.email}
-        </Text>
-      )}
+      <View style={styles.profilePicWrapper}>
+        {user?.photoURL ? (
+          <Image source={{ uri: user?.photoURL }} style={styles.profilePic} />
+        ) : (
+          <Image source={require('../../assets/images/default-avatar.png')} style={styles.profilePic} />
+        )}
+        {user?.displayName && (
+          <Text style={styles.displayName}>
+            {user.displayName}
+          </Text>
+        )}
+
+        {user?.email && (
+          <Text style={styles.email}>
+            {user.email}
+          </Text>
+        )}
+      </View>
 
       <TouchableOpacity
         onPress={handleLogout}
-        className={`bg-indigo-600 px-4 py-2 rounded mb-4 ${isLoggingOut ? 'opacity-50' : ''}`}
+        style={[styles.logoutButton, isLoggingOut && styles.disabledButton]}
+        disabled={isLoggingOut}
       >
         {isLoggingOut ? (
           <ActivityIndicator color="white" />
         ) : (
-          <Text className="text-white text-base">Logout</Text>
+          <Text style={styles.logoutText}>Logout</Text>
         )}
       </TouchableOpacity>
 
     </SafeAreaView>
   )
 }
-
 export default Profile
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    paddingHorizontal: 24,
-  },
-  innerWrapper: {
-    width: "100%",
-  },
-  logo: {
-    height: 128,
-    width: 128,
-    alignSelf: "center",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    backgroundColor: 'white',
   },
   title: {
-    textAlign: "center",
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-    marginTop: 16,
+    fontSize: 30, // text-5xl ~ 40px
+    fontWeight: 'bold',
+    color: '#1f2937', // text-dark-200 ~ neutral dark
+    marginBottom: 24,
+    textAlign: 'center',
   },
-  form: {
-    marginTop: 24,
-    gap: 20,
+  profilePicWrapper: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  inputWrapper: {
-    position: "relative",
+  profilePic: {
+    width: 90,
+    height: 90,
+    borderRadius: 60, // Makes it circular
+    borderWidth: 2,
+    borderColor: '#4F46E5',
+    alignItems: 'center',
   },
-  input: {
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    backgroundColor: "white",
-    fontSize: 16,
-    color: "#111827",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+  displayName: {
+    fontSize: 18, // text-lg
+    color: '#4B5563', // text-gray-600
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  eyeIcon: {
-    position: "absolute",
-    right: 12,
-    top: 27,
-    transform: [{ translateY: -10 }],
+  email: {
+    fontSize: 18, // text-lg
+    color: '#4B5563', // text-gray-600
+    textAlign: 'center',
+    marginBottom: 32,
   },
-  error: {
-    color: "#ef4444",
-    fontSize: 14,
-    marginTop: 4,
+  logoutButton: {
+    backgroundColor: '#4F46E5', // bg-indigo-600
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
   },
-  registerButton: {
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  logoutText: {
+    color: 'white',
+    fontSize: 16, // text-base
   },
-  registerButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  disabled: {
+  disabledButton: {
     opacity: 0.5,
-  },
-  loginRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    paddingTop: 12,
-  },
-  loginText: {
-    fontSize: 14,
-    color: "#4B5563",
-  },
-  loginLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4F46E5",
-  },
-  dividerWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#D1D5DB",
-  },
-  orText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  googleWrapper: {
-    alignItems: "center",
-    paddingTop: 8,
-  },
-  googleButton: {
-    width: "100%",
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  googleButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
   },
 });

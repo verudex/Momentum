@@ -1,11 +1,20 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { StyleSheet, Text, View, TouchableOpacity, ImageBackground, Image, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
 
 const Startup = () => {
   const router = useRouter();
+
+    // Configure Google Sign-In webclient Id
+    useEffect(() => {
+        GoogleSignin.configure({
+        webClientId: '12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com',
+      });
+    }, []);
 
   return (
     <ImageBackground

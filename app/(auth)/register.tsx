@@ -37,6 +37,11 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Waits for assets to load before showing screen.
+  const assetsReady = useAssetPreload([
+    require('../../assets/images/MomentumLogo.png'),
+  ]);
+
   const isInvalid = !username || !email || !password || !confirmPassword;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -47,13 +52,6 @@ const Register = () => {
   //     router.replace("/(tabs)/home");
   //   }
   // }, [user, initializing]);
-
-  // Configure Google Sign-In webclient Id
-  useEffect(() => {
-      GoogleSignin.configure({
-      webClientId: '12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com',
-    });
-  }, []);
 
   // Google Sign-In Logic
   const handleGoogleSignIn = async () => {
@@ -104,11 +102,6 @@ const Register = () => {
       setIsLoading(false);
     }
   };
-
-  // Waits for assets to load before showing screen.
-  const assetsReady = useAssetPreload([
-    require('../../assets/images/MomentumLogo.png'),
-  ]);
 
   if (!assetsReady) {
     return (
@@ -262,9 +255,6 @@ const Register = () => {
           entering={FadeInDown.delay(900).duration(1000).springify()}
           style={styles.googleWrapper}
         >
-          {/* <TouchableOpacity style={styles.googleButton}>
-            <Text style={styles.googleButtonText}>Sign up with Google</Text>
-          </TouchableOpacity> */}
           <GoogleSigninButton
             size={GoogleSigninButton.Size.Wide}
             color={GoogleSigninButton.Color.Dark}
