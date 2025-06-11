@@ -8,6 +8,8 @@ import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { AuthContext } from "../../contexts/AuthContext";
 import { addWorkoutData } from "../../utils/userFirestore";
+import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { app } from "../../utils/firebaseConfig";
 
 const WorkoutSubmit = () => {
   const [workoutName, setWorkoutName] = useState("");
@@ -19,15 +21,40 @@ const WorkoutSubmit = () => {
 
   const isInvalid = !workoutName;
 
+  const db = getFirestore(app);
+
   const handleSubmit = async () => {
+    console.log("Submit button clicked");
     setIsLoading(true);
     if (user == null) {
       Alert.alert("Error", "User not logged in.");
       return;
     }
-    //await addWorkoutData(user.uid, workoutName, duration, sets, reps);
-    const userDocument = await firestore().collection('Users').doc('HSBGofcz7td0QgqJ9Ntn');
-    console.log(userDocument);
+    /*const userDocument = await firestore().collection('Users').doc('TestDocument').get();
+    if (userDocument.exists()) {
+      console.log("Data:", userDocument.data());
+    } else {
+      console.log("No such document!");
+    }*/
+    const docRef = doc(db, 'Users', 'TestDocument');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      console.log("Data:", docSnap.data());
+    } else {
+      console.log("No such document!");
+    }
+
+    await addDoc(
+      collection(db, "Users", user.uid, "workouts"), // nested path
+      {
+        name: workoutName,
+        duration: duration,
+        sets: sets,
+        reps: reps,
+        timestamp: serverTimestamp(),
+      }
+    );
+    console.log("Successfully written!");
     setWorkoutName("");
     setDuration("");
     setReps("");
@@ -115,7 +142,9 @@ const WorkoutSubmit = () => {
 
           <Animated.View entering={FadeInLeft.delay(700).duration(1000).springify()}>
             <TouchableOpacity
-              disabled={isInvalid || isLoading}
+              disabled={ false
+                //isInvalid || isLoading
+                }
               onPress={handleSubmit}
               style={[styles.submitButton, (isInvalid || isLoading) && styles.disabled]}
             >

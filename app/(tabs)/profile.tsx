@@ -16,7 +16,6 @@ const Profile = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    console.log(user);
     setIsLoggingOut(true);
     await signOut(setUser); // From utils
     setIsLoggingOut(false);
