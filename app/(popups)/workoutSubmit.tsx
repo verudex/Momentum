@@ -26,7 +26,7 @@ const WorkoutSubmit = () => {
       return;
     }
     //await addWorkoutData(user.uid, workoutName, duration, sets, reps);
-    const userDocument = await firestore().collection('Users').doc('HSBGofcz7td0QgqJ9Ntn').get();
+    const userDocument = await firestore().collection('Users').doc('HSBGofcz7td0QgqJ9Ntn');
     console.log(userDocument);
     setWorkoutName("");
     setDuration("");

@@ -23,6 +23,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import { googleSignIn } from "../../utils/signIn_Out";
+import { dataTest } from "../../utils/userFirestore";
 
 
 const Register = () => {
@@ -56,7 +57,6 @@ const Register = () => {
 
   // Google Sign-In Logic
   const handleGoogleSignIn = async () => {
-    console.log(user);
     const result = await googleSignIn(setUser);
 
     if (result.success) {
@@ -226,7 +226,8 @@ const Register = () => {
           <Animated.View entering={FadeInDown.delay(600).duration(1000).springify()}>
             <TouchableOpacity
               disabled={isInvalid || isLoading}
-              onPress={handleEmailRegister}
+              //onPress={handleEmailRegister}
+              onPress={dataTest}
               style={[styles.registerButton, (isInvalid || isLoading) && styles.disabled]}
             >
               {isLoading ? (

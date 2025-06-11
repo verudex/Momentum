@@ -1,9 +1,22 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
+// Create data test
+export const dataTest = async () => {
+    console.log("running test");
+    await firestore()
+  .collection('Users')
+  .add({
+    name: 'Test',
+    age: 30,
+  })
+  .then(() => {
+    console.log('User added!');
+  });
+}
 // Create a user document when first signing up
 export const createUserProfile = async (user) => {
-    const userCollection = firestore().collection(userData).doc(user.uid);
+    const userCollection = firestore().collection('userData').doc(user.uid);
 
     await userCollection.set({
         uid: user.uid,
@@ -13,7 +26,7 @@ export const createUserProfile = async (user) => {
     });
 
     // Setup workout collection for each user
-    firestore().collection(userData).doc(user.uid).collection(workoutData);
+    firestore().collection('userData').doc(user.uid).collection(workoutData);
 
     return userCollection;
 };
@@ -32,9 +45,9 @@ export const getUserData = async (userId) => {
 export const addWorkoutData = 
     async (userId, workoutName, duration, sets, reps) => {
     const workoutRef = firestore()
-        .collection(userData)
+        .collection('userData')
         .doc(userId)
-        .collection(workouts)
+        .collection('workouts')
         .doc(workoutName);
 
     const snapshot = await workoutRef.get();
