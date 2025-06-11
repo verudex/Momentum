@@ -38,6 +38,11 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Waits for assets to load before showing screen.
+  const assetsReady = useAssetPreload([
+    require('../../assets/images/MomentumLogo.png'),
+  ]);
+
   const isInvalid = !username || !email || !password || !confirmPassword;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -78,11 +83,6 @@ const Register = () => {
     await emailRegister(email, password, setUser);
     setIsLoading(false);
   };
-
-  // Waits for assets to load before showing screen.
-  const assetsReady = useAssetPreload([
-    require('../../assets/images/MomentumLogo.png'),
-  ]);
 
   if (!assetsReady) {
     return (

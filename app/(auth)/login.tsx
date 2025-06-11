@@ -31,6 +31,11 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Waits for assets to load before showing screen.
+  const assetsReady = useAssetPreload([
+    require('../../assets/images/MomentumLogo.png'),
+  ]);
+
   const isInvalid = !email || !password;
 
   const handleGoogleSignIn = async () => {
@@ -52,10 +57,6 @@ const Login = () => {
     await signIn(email, password, setUser);
     setIsLoading(false);
   };
-
-  const assetsReady = useAssetPreload([
-    require("../../assets/images/MomentumLogo.png"),
-  ]);
 
   if (!assetsReady) {
     return (
@@ -161,7 +162,11 @@ const Login = () => {
           <GoogleSigninButton
             size={GoogleSigninButton.Size.Wide}
             color={GoogleSigninButton.Color.Dark}
+          <GoogleSigninButton
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Dark}
             onPress={handleGoogleSignIn}
+          />
           />
         </Animated.View>
       </View>
