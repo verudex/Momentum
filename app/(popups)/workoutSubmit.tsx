@@ -30,12 +30,6 @@ const WorkoutSubmit = () => {
       Alert.alert("Error", "User not logged in.");
       return;
     }
-    /*const userDocument = await firestore().collection('Users').doc('TestDocument').get();
-    if (userDocument.exists()) {
-      console.log("Data:", userDocument.data());
-    } else {
-      console.log("No such document!");
-    }*/
     const docRef = doc(db, 'Users', 'TestDocument');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -142,9 +136,7 @@ const WorkoutSubmit = () => {
 
           <Animated.View entering={FadeInLeft.delay(700).duration(1000).springify()}>
             <TouchableOpacity
-              disabled={ false
-                //isInvalid || isLoading
-                }
+              disabled={isInvalid || isLoading}
               onPress={handleSubmit}
               style={[styles.submitButton, (isInvalid || isLoading) && styles.disabled]}
             >

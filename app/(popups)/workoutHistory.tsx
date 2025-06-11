@@ -1,159 +1,196 @@
-import React from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Dimensions,
+  ActivityIndicator,
+  Alert,
+  NativeSyntheticEvent, 
+  NativeScrollEvent,
+} from 'react-native';
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  orderBy, 
+  limit, 
+  getDocs, 
+  startAfter, 
+  QueryDocumentSnapshot, 
+  DocumentData 
+} from 'firebase/firestore';
+import { AuthContext } from "../../contexts/AuthContext";
+import { app } from '../../utils/firebaseConfig';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
 
-const DietTracking = () => {
+type Workout = {
+  id: string;
+  name: string;
+  duration: string;
+  sets: string;
+  reps: string;
+  timestamp: any;
+};
+
+const WorkoutHistory = () => {
+  const db = getFirestore(app);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [endReached, setEndReached] = useState(false);
+  const { user } = useContext(AuthContext);
+
+  const fetchWorkouts = async (loadMore = false) => {
+    if (user == null) {
+      Alert.alert("Error", "User not logged in.");
+      return;
+    }
+
+    if (loadMore && endReached) return;
+
+    const baseQuery = query(
+      collection(db, 'Users', user.uid, 'workouts'),
+      orderBy('timestamp', 'desc'),
+      ...(loadMore && lastDoc ? [startAfter(lastDoc)] : []),
+      limit(10)
+    );
+
+    const snapshot = await getDocs(baseQuery);
+    const newWorkouts: Workout[] = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Workout, 'id'>)  // Ensures full Workout object
+    }));
+
+    setWorkouts(prev => (loadMore ? [...prev, ...newWorkouts] : newWorkouts));
+    setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+    setEndReached(snapshot.empty);
+    setLoading(false);
+    setLoadingMore(false);
+  };
+
+  useEffect(() => {
+    fetchWorkouts();
+  }, []);
+
+  const handleScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const bottomReached =
+      nativeEvent.layoutMeasurement.height + nativeEvent.contentOffset.y >=
+      nativeEvent.contentSize.height - 20;
+
+    if (bottomReached && !loadingMore && !endReached) {
+      setLoadingMore(true);
+      fetchWorkouts(true);
+    }
+  };
+
+  const screenHeight = Dimensions.get('window').height;
+
   return (
-    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
-      <View style={styles.innerWrapper}>
-        <Animated.Text 
-        entering={FadeInUp.duration(500).springify()}
-        style={styles.title}
-        >
+    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 3}]}>
+        <View style={styles.headerContainer}>
+          <Animated.Text 
+            entering={FadeInUp.duration(500).springify()}
+            style={styles.header}
+          >
             Workout History
-        </Animated.Text>
-              
-        <Animated.Text 
-        entering={FadeInUp.delay(200).duration(500).springify()}
-        style={styles.subtitle}
-        >
+          </Animated.Text>
+
+          <Animated.Text 
+            entering={FadeInUp.delay(200).duration(500).springify()}
+            style={styles.subHeader}
+          >
             Keep up the momentum!
-        </Animated.Text>
-      </View>
+          </Animated.Text>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 32 }} />
+        ) : (
+          <ScrollView 
+            style={styles.scrollArea} 
+            onScroll={handleScroll} 
+            scrollEventThrottle={16}
+            contentContainerStyle={{ paddingBottom: 32 }}
+          >
+            {workouts.map((workout, idx) => (
+              <Animated.View 
+                entering={FadeInLeft.delay(idx * 200).duration(500).springify()}
+                key={workout.id || idx} style={[styles.card, { height: screenHeight * 0.18 }]}
+              >
+                <Text style={styles.name}>{workout.name}</Text>
+                <Text>Duration: {workout.duration}</Text>
+                <Text>Sets: {workout.sets} | Reps: {workout.reps}</Text>
+                <Text style={styles.timestamp}>{new Date(workout.timestamp.seconds * 1000).toLocaleString()}</Text>
+              </Animated.View>
+            ))}
+            {loadingMore && <ActivityIndicator size="small" color="#4F46E5" style={{ marginVertical: 16 }} />}
+          </ScrollView>
+        )}
     </SafeAreaView>
   )
 }
 
-export default DietTracking
+export default WorkoutHistory
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: 'white',
     paddingHorizontal: 24,
   },
-  innerWrapper: {
-    width: "100%",
-  },
-  logo: {
-    height: 128,
-    width: 128,
-    alignSelf: "center",
-  },
-  title: {
-    textAlign: "center",
-    fontSize: 45,
-    fontWeight: "bold",
-    color: "rgb(57, 53, 53)",
-    marginTop: 16,
-  },
-  subtitle: {
-    textAlign: "center",
-    fontSize: 23,
-    fontWeight: "bold",
-    color: "rgb(146, 136, 136)",
-  },
-  form: {
-    marginTop: 24,
-    gap: 20,
-  },
-  inputWrapper: {
-    position: "relative",
-  },
-  input: {
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    backgroundColor: "white",
-    fontSize: 16,
-    color: "#111827",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 12,
-    top: 27,
-    transform: [{ translateY: -10 }],
-  },
-  error: {
-    color: "#ef4444",
-    fontSize: 14,
-    marginTop: 4,
-  },
-  registerButton: {
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  registerButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  loginRow: {
-    flexDirection: "row",
-    justifyContent: "center",
+    headerContainer: {
     paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: 'white',
+    zIndex: 1,
   },
-  loginText: {
-    fontSize: 14,
-    color: "#4B5563",
+  header: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 20,
+    color: 'rgb(57, 53, 53)"',
   },
-  loginLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4F46E5",
+  subHeader: {
+    textAlign: 'center',
+    color: 'rgb(146, 136, 136)',
+    fontSize: 20,
+    marginBottom: 8,
   },
-  dividerWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  divider: {
+  scrollArea: {
     flex: 1,
-    height: 1,
-    backgroundColor: "#D1D5DB",
+    paddingHorizontal: 8,
   },
-  orText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  googleWrapper: {
-    alignItems: "center",
-    paddingTop: 8,
-  },
-  googleButton: {
-    width: "100%",
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+  card: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
+    padding: 16,
+    marginVertical: 8,
+
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+
+    // Android shadow
+    elevation: 4,
   },
-  googleButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
+  name: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  timestamp: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#9CA3AF',
   },
 });

@@ -15,16 +15,8 @@ import {
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
-import {
-  GoogleSignin,
-  statusCodes,
-  isErrorWithCode,
-  GoogleSigninButton,
-} from '@react-native-google-signin/google-signin';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { app } from "../../utils/firebaseConfig";
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { googleSignIn, emailRegister } from "../../utils/signIn_Out";
-import { dataTest } from "../../utils/userFirestore";
 
 
 const Register = () => {
@@ -38,21 +30,14 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Waits for assets to load before showing screen.
-  const assetsReady = useAssetPreload([
-    require('../../assets/images/MomentumLogo.png'),
-  ]);
-
   const isInvalid = !username || !email || !password || !confirmPassword;
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Configure Google Sign-In webclient Id
-  useEffect(() => {
-      GoogleSignin.configure({
-      webClientId: '12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com',
-    });
-  }, []);
+  // Waits for assets to load before showing screen.
+  const assetsReady = useAssetPreload([
+    require('../../assets/images/MomentumLogo.png'),
+  ]);
 
   // Google Sign-In Logic
   const handleGoogleSignIn = async () => {
@@ -84,164 +69,155 @@ const Register = () => {
     setIsLoading(false);
   };
 
-  if (!assetsReady) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'white',
-        }}
-      >
-        <ActivityIndicator size="large" color="#4F46E5" />
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}> 
-      <View style={styles.innerWrapper}>
-        <Animated.Image 
-          entering={FadeInUp.duration(500).springify()}
-          style={styles.logo} source={require("../../assets/images/MomentumLogo.png")} 
-        />
+      {!assetsReady ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4F46E5" />
+        </View>
+      ) : (
+        <View style={styles.innerWrapper}>
+          <Animated.Image 
+            entering={FadeInUp.duration(500).springify()}
+            style={styles.logo} source={require("../../assets/images/MomentumLogo.png")} 
+          />
 
-        <Animated.Text 
-          entering={FadeInUp.delay(100).duration(500).springify()}
-          style={styles.title}
-        >
-          Register a new account
-        </Animated.Text>
-
-        <View style={styles.form}>
-          <Animated.View 
-            entering={FadeInDown.delay(200).duration(1000).springify()}
-            style={styles.inputWrapper}
+          <Animated.Text 
+            entering={FadeInUp.delay(100).duration(500).springify()}
+            style={styles.title}
           >
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              autoCapitalize="none"
-              autoComplete="email"
-              onChangeText={(email) => {
-                setEmail(email);
-                //Clear error when user starts typing again
-                if (emailError) setEmailError("")              
+            Register a new account
+          </Animated.Text>
+
+          <View style={styles.form}>
+            <Animated.View 
+              entering={FadeInDown.delay(200).duration(1000).springify()}
+              style={styles.inputWrapper}
+            >
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                autoCapitalize="none"
+                autoComplete="email"
+                onChangeText={(email) => {
+                  setEmail(email);
+                  //Clear error when user starts typing again
+                  if (emailError) setEmailError("")              
+                  }}
+                value={email}
+              />
+              {emailError ? <Text style={styles.error}>{emailError}</Text> : null}
+            </Animated.View>
+
+            <Animated.View 
+              entering={FadeInDown.delay(300).duration(1000).springify()}
+              style={styles.inputWrapper}
+            >
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                autoCapitalize="none"
+                onChangeText={(name) => setUsername(name)}
+              />
+            </Animated.View>
+
+            <Animated.View 
+              entering={FadeInDown.delay(400).duration(1000).springify()}
+              style={styles.inputWrapper}
+            >
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                onChangeText={(pw) => {
+                  setPassword(pw);
+                  if (passwordError) setPasswordError(""); // Clear error when typing
+                  if (confirmPassword) {
+                    setPasswordError(pw !== confirmPassword ? "Passwords do not match." : "");
+                  }
                 }}
-              value={email}
-            />
-            {emailError ? <Text style={styles.error}>{emailError}</Text> : null}
-          </Animated.View>
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+              </TouchableOpacity>
+            </Animated.View>
 
-          <Animated.View 
-            entering={FadeInDown.delay(300).duration(1000).springify()}
-            style={styles.inputWrapper}
-          >
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              autoCapitalize="none"
-              onChangeText={(name) => setUsername(name)}
-            />
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInDown.delay(400).duration(1000).springify()}
-            style={styles.inputWrapper}
-          >
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              onChangeText={(pw) => {
-                setPassword(pw);
+            <Animated.View 
+              entering={FadeInDown.delay(500).duration(1000).springify()}
+              style={styles.inputWrapper}
+            >
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                onChangeText={(pw) => {
+                setConfirmPassword(pw);
                 if (passwordError) setPasswordError(""); // Clear error when typing
-                if (confirmPassword) {
-                  setPasswordError(pw !== confirmPassword ? "Passwords do not match." : "");
-                }
+                setPasswordError(password && pw !== password ? "Passwords do not match." : "");
               }}
-            />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+              </TouchableOpacity>
+              {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(600).duration(1000).springify()}>
+              <TouchableOpacity
+                disabled={isInvalid || isLoading}
+                onPress={handleEmailRegister}
+                style={[styles.registerButton, (isInvalid || isLoading) && styles.disabled]}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.registerButtonText}>Register</Text>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+
+          <Animated.View 
+            entering={FadeInDown.delay(700).duration(1000).springify()}
+            style={styles.loginRow}
+          >
+            <Text style={styles.loginText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => router.push("/(auth)/login")}> 
+              <Text style={styles.loginLink}>Sign in</Text>
             </TouchableOpacity>
           </Animated.View>
 
           <Animated.View 
-            entering={FadeInDown.delay(500).duration(1000).springify()}
-            style={styles.inputWrapper}
+            entering={FadeInDown.delay(800).duration(1000).springify()}
+            style={styles.dividerWrapper}
           >
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              onChangeText={(pw) => {
-              setConfirmPassword(pw);
-              if (passwordError) setPasswordError(""); // Clear error when typing
-              setPasswordError(password && pw !== password ? "Passwords do not match." : "");
-            }}
-            />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
-            </TouchableOpacity>
-            {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
+            <View style={styles.divider} />
+            <Text style={styles.orText}>or</Text>
+            <View style={styles.divider} />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(600).duration(1000).springify()}>
-            <TouchableOpacity
-              disabled={isInvalid || isLoading}
-              onPress={handleEmailRegister}
-              style={[styles.registerButton, (isInvalid || isLoading) && styles.disabled]}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.registerButtonText}>Register</Text>
-              )}
-            </TouchableOpacity>
+          <Animated.View 
+            entering={FadeInDown.delay(900).duration(1000).springify()}
+            style={styles.googleWrapper}
+          >
+            <GoogleSigninButton
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Dark}
+              onPress={handleGoogleSignIn}
+            />
           </Animated.View>
         </View>
-
-        <Animated.View 
-          entering={FadeInDown.delay(700).duration(1000).springify()}
-          style={styles.loginRow}
-        >
-          <Text style={styles.loginText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/login")}> 
-            <Text style={styles.loginLink}>Sign in</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
-        <Animated.View 
-          entering={FadeInDown.delay(800).duration(1000).springify()}
-          style={styles.dividerWrapper}
-        >
-          <View style={styles.divider} />
-          <Text style={styles.orText}>or</Text>
-          <View style={styles.divider} />
-        </Animated.View>
-
-        <Animated.View 
-          entering={FadeInDown.delay(900).duration(1000).springify()}
-          style={styles.googleWrapper}
-        >
-          <GoogleSigninButton
-            size={GoogleSigninButton.Size.Wide}
-            color={GoogleSigninButton.Color.Dark}
-            onPress={handleGoogleSignIn}
-          />
-        </Animated.View>
-      </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -255,6 +231,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
     paddingHorizontal: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   innerWrapper: {
     width: "100%",
