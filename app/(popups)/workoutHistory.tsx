@@ -31,9 +31,14 @@ import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-n
 type Workout = {
   id: string;
   name: string;
-  duration: string;
+  duration: {
+    hours: string;
+    minutes: string;
+    seconds: string;
+  };
   sets: string;
   reps: string;
+  weight: string,
   timestamp: any;
 };
 
@@ -81,7 +86,7 @@ const WorkoutHistory = () => {
   const handleScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
     const bottomReached =
       nativeEvent.layoutMeasurement.height + nativeEvent.contentOffset.y >=
-      nativeEvent.contentSize.height - 20;
+      nativeEvent.contentSize.height - 60;
 
     if (bottomReached && !loadingMore && !endReached) {
       setLoadingMore(true);
@@ -93,45 +98,63 @@ const WorkoutHistory = () => {
 
   return (
     <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 3}]}>
-        <View style={styles.headerContainer}>
-          <Animated.Text 
-            entering={FadeInUp.duration(500).springify()}
-            style={styles.header}
-          >
-            Workout History
-          </Animated.Text>
+      <View style={styles.headerContainer}>
+        <Animated.Text 
+          entering={FadeInUp.duration(500).springify()}
+          style={styles.header}
+        >
+          Workout History
+        </Animated.Text>
 
-          <Animated.Text 
-            entering={FadeInUp.delay(200).duration(500).springify()}
-            style={styles.subHeader}
-          >
-            Keep up the momentum!
-          </Animated.Text>
-        </View>
+        <Animated.Text 
+          entering={FadeInUp.delay(200).duration(500).springify()}
+          style={styles.subHeader}
+        >
+          Keep up the momentum!
+        </Animated.Text>
+      </View>
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 32 }} />
-        ) : (
-          <ScrollView 
-            style={styles.scrollArea} 
-            onScroll={handleScroll} 
-            scrollEventThrottle={16}
-            contentContainerStyle={{ paddingBottom: 32 }}
-          >
-            {workouts.map((workout, idx) => (
-              <Animated.View 
-                entering={FadeInLeft.delay(idx * 200).duration(500).springify()}
-                key={workout.id || idx} style={[styles.card, { height: screenHeight * 0.18 }]}
-              >
-                <Text style={styles.name}>{workout.name}</Text>
-                <Text>Duration: {workout.duration}</Text>
-                <Text>Sets: {workout.sets} | Reps: {workout.reps}</Text>
-                <Text style={styles.timestamp}>{new Date(workout.timestamp.seconds * 1000).toLocaleString()}</Text>
-              </Animated.View>
-            ))}
-            {loadingMore && <ActivityIndicator size="small" color="#4F46E5" style={{ marginVertical: 16 }} />}
-          </ScrollView>
-        )}
+      {loading ? (
+        <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: 32 }} />
+      ) : (
+        <ScrollView 
+          style={styles.scrollArea} 
+          onScroll={handleScroll} 
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingBottom: 32 }}
+        >
+          {workouts.map((workout, idx) => (
+            <Animated.View 
+              entering={FadeInLeft.delay(idx % 10 * 200).duration(500).springify()}
+              key={workout.id} style={[styles.card, { height: screenHeight * 0.18 }]}
+            >
+              <Text 
+                adjustsFontSizeToFit 
+                numberOfLines={1}
+                style={styles.workoutName}>{workout.name}</Text>
+              <Text style={styles.duration}>Duration: 
+                {workout.duration.hours ? ` ${workout.duration.hours}h` : ''}
+                {workout.duration.minutes ? ` ${workout.duration.minutes}m` : ''}
+                {workout.duration.seconds ? ` ${workout.duration.seconds}s` : ''}
+              </Text>
+              <Text style={styles.sets}>Sets: {workout.sets} | Reps: {workout.reps}</Text>
+              <Text style={styles.weightLifted}>Weight lifted: {workout.weight}</Text>
+              <Text style={styles.timestamp}>
+                {new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long', // 👈 full month name
+                  day: 'numeric',
+                }) + ' at ' + new Date(workout.timestamp.seconds * 1000).toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                })}
+              </Text>
+            </Animated.View>
+          ))}
+          {loadingMore && <ActivityIndicator size="small" color="rgb(146, 136, 136)" style={{ marginVertical: 16 }} />}
+        </ScrollView>
+      )}
     </SafeAreaView>
   )
 }
@@ -145,8 +168,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
     headerContainer: {
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingVertical: 12,
     backgroundColor: 'white',
     zIndex: 1,
   },
@@ -170,7 +192,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#F3F4F6',
     borderRadius: 16,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     marginVertical: 8,
 
     // iOS shadow
@@ -182,14 +205,31 @@ const styles = StyleSheet.create({
     // Android shadow
     elevation: 4,
   },
-  name: {
-    fontSize: 18,
+  workoutName: {
+    fontSize: 28,
     fontWeight: '600',
     color: '#111827',
     marginBottom: 4,
   },
+  duration: {
+    fontSize: 18,
+    fontWeight: '300',
+    color: '#111827',
+    marginBottom: 6,
+  },
+  sets: {
+    fontSize: 18,
+    fontWeight: '300',
+    color: '#111827',
+    marginBottom: 6,
+  },
+  weightLifted: {
+    fontSize: 18,
+    fontWeight: '300',
+    color: '#111827',
+    marginBottom: 6,
+  },
   timestamp: {
-    marginTop: 4,
     fontSize: 12,
     color: '#9CA3AF',
   },

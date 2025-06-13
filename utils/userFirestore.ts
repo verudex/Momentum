@@ -53,7 +53,8 @@ export const addWorkoutData = async (
   workoutName: string,
   duration: string,
   sets: string,
-  reps: string
+  reps: string,
+  weight: string
 ) => {
   const workoutRef = doc(db, "userData", userId, "workouts", workoutName);
   const snapshot = await getDoc(workoutRef);
@@ -63,6 +64,7 @@ export const addWorkoutData = async (
     Duration: duration,
     Sets: sets,
     Reps: reps,
+    Weight: weight,
   };
 
   if (snapshot.exists()) {

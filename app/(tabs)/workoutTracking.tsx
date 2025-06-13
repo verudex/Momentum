@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: "#D1D5DB",
+    marginTop: 4,
   },
   orText: {
     marginHorizontal: 16,

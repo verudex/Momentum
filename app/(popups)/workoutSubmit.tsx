@@ -1,23 +1,36 @@
 import React, { useContext, useState } from "react";
-import { useRouter } from "expo-router";
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Alert } from "react-native";
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  TextInput, 
+  ActivityIndicator, 
+  Alert, 
+  ScrollView, 
+  KeyboardAvoidingView, 
+  Platform, 
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
-import auth from "@react-native-firebase/auth";
-import firestore from "@react-native-firebase/firestore";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft, Easing } from "react-native-reanimated";
 import { AuthContext } from "../../contexts/AuthContext";
-import { addWorkoutData } from "../../utils/userFirestore";
+import WorkoutOptions from "../../utils/workoutOptions";
 import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
 
 const WorkoutSubmit = () => {
+  const { user } = useContext(AuthContext);
+
   const [workoutName, setWorkoutName] = useState("");
-  const [duration, setDuration] = useState("");
+  const [filteredWorkouts, setFilteredWorkouts] = useState(WorkoutOptions);
+  const [inputLayout, setInputLayout] = useState({ y: 0, height: 0 });
+  const [duration, setDuration] = useState({ hours: "", minutes: "", seconds: "" });
   const [sets, setSets] = useState("");
   const [reps, setReps] = useState("");
+  const [weight, setWeight] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useContext(AuthContext);
 
   const isInvalid = !workoutName;
 
@@ -28,16 +41,14 @@ const WorkoutSubmit = () => {
     setIsLoading(true);
     if (user == null) {
       Alert.alert("Error", "User not logged in.");
+      setIsLoading(false);
       return;
     }
-    const docRef = doc(db, 'Users', 'TestDocument');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      console.log("Data:", docSnap.data());
-    } else {
-      console.log("No such document!");
+    if (!WorkoutOptions.includes(workoutName)) {
+      Alert.alert("Invalid Input", "Invalid Workout Name!")
+      setIsLoading(false);
+      return;
     }
-
     await addDoc(
       collection(db, "Users", user.uid, "workouts"), // nested path
       {
@@ -45,241 +56,306 @@ const WorkoutSubmit = () => {
         duration: duration,
         sets: sets,
         reps: reps,
+        weight: weight,
         timestamp: serverTimestamp(),
       }
     );
     console.log("Successfully written!");
     setWorkoutName("");
-    setDuration("");
+    setDuration({ hours: "", minutes: "", seconds: "" });
     setReps("");
     setSets("");
+    setWeight("");
     setIsLoading(false);
+    Alert.alert("Workout Recorded!", "Well done!")
   };
+
+  const handleWorkoutInput = (text: string) => {
+    setWorkoutName(text);
+    setShowDropdown(true);
+    setFilteredWorkouts(WorkoutOptions.filter(item => item.toLowerCase().includes(text.toLowerCase())));
+  };
+
+  const isNumber = (text: string) => /^\d+$/.test(text);
+  const isDecimal = (text: string) => /^\d+(\.\d{0,1})?$/.test(text);
   
   return (
-    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
-      <View style={styles.innerWrapper}>
-        <Animated.Text 
-          entering={FadeInUp.duration(500).springify()}
-          style={styles.title}
-        >
-          Workout Tracking
-        </Animated.Text>
-
-        <Animated.Text 
-          entering={FadeInUp.delay(200).duration(500).springify()}
-          style={styles.subtitle}
-        >
-          Record your workout:
-        </Animated.Text>
-
-        <View style={styles.form}>
-          <Animated.View 
-            entering={FadeInLeft.delay(300).duration(1000).springify()}
-            style={styles.inputWrapper}
-          >
-            <TextInput
-              style={styles.input}
-              placeholder="Workout Name"
-              autoCapitalize="none"
-              onChangeText={(workoutName) => {
-                setWorkoutName(workoutName);
-              }}
-              value={workoutName}
-            />
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInLeft.delay(400).duration(1000).springify()}
-            style={styles.inputWrapper}
-          >
-            <TextInput
-              style={styles.input}
-              placeholder="Duration"
-              autoCapitalize="none"
-              onChangeText={(duration) => {
-                setDuration(duration);
-              }}
-              value={duration}
-            />
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInLeft.delay(500).duration(1000).springify()}
-            style={styles.inputWrapper}
-          >
-            <TextInput
-              style={styles.input}
-              placeholder="Number of Sets"
-              autoCapitalize="none"
-              onChangeText={(sets) => {
-                setSets(sets);
-              }}
-              value={sets}
-            />
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInLeft.delay(600).duration(1000).springify()}
-            style={styles.inputWrapper}
-          >
-            <TextInput
-              style={styles.input}
-              placeholder="Number of Reps"
-              autoCapitalize="none"
-              onChangeText={(reps) => {
-                setReps(reps);
-              }}
-              value={reps}
-            />
-          </Animated.View>
-
-          <Animated.View entering={FadeInLeft.delay(700).duration(1000).springify()}>
-            <TouchableOpacity
-              disabled={isInvalid || isLoading}
-              onPress={handleSubmit}
-              style={[styles.submitButton, (isInvalid || isLoading) && styles.disabled]}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={100} // adjust if needed
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() * 3 / 4 }]}>
+          <View>
+            <Animated.Text 
+              entering={FadeInUp.duration(500).springify()} 
+              style={styles.title}
             >
-              {isLoading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.submitButtonText}>Record</Text>
-              )}
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
+              Workout Tracking
+            </Animated.Text>
+            <Animated.Text 
+              entering={FadeInUp.delay(200).duration(500).springify()} 
+              style={styles.subtitle}
+            >
+              Record your workout:
+            </Animated.Text>
 
-      </View>
-    </SafeAreaView>
-  )
-}
+            <Animated.View
+              entering={FadeInLeft.delay(300).duration(500).springify()} 
+              style={styles.workoutNameInput}
+              onLayout={(event) => {
+                const { y, height } = event.nativeEvent.layout;
+                setInputLayout({ y, height });
+              }}
+            >
+              <TextInput
+                style={styles.input}
+                placeholder="Workout Name"
+                value={workoutName}
+                onChangeText={handleWorkoutInput}
+              />
+            </Animated.View>
 
-export default WorkoutSubmit
+            {showDropdown && workoutName.length > 0 && filteredWorkouts.length > 0 && (
+              <Animated.View 
+                entering={FadeInUp.duration(100).easing(Easing.out(Easing.ease))}
+                style={[styles.dropdownWrapper, { top: inputLayout.y + inputLayout.height * 2 / 3 }]}
+              >
+                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                  {filteredWorkouts.map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      onPress={() => {
+                        setWorkoutName(item);
+                        setFilteredWorkouts([]);
+                        setShowDropdown(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItem}>{item}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </Animated.View>
+            )}
+
+            <View style={styles.durationRow}>
+              <Animated.View 
+                entering={FadeInLeft.delay(400).duration(500).springify()} 
+                style={styles.durationBox}
+              >
+                <TextInput
+                  style={styles.durationInput}
+                  placeholder="Hours"
+                  keyboardType="number-pad"
+                  value={duration.hours}
+                  onChangeText={(text) => {
+                    if (text === "" || isNumber(text)) setDuration({ ...duration, hours: text });
+                  }}
+                />
+              </Animated.View>
+
+              <Animated.View 
+                entering={FadeInLeft.delay(500).duration(500).springify()} 
+                style={[styles.durationBox, { marginHorizontal: 4 }]}
+              >
+                <TextInput
+                  style={styles.durationInput}
+                  placeholder="Mins"
+                  keyboardType="number-pad"
+                  value={duration.minutes}
+                  onChangeText={(text) => {
+                    if (text === "" || isNumber(text)) setDuration({ ...duration, minutes: text });
+                  }}
+                />
+              </Animated.View>
+
+              <Animated.View 
+                entering={FadeInLeft.delay(600).duration(500).springify()} 
+                style={styles.durationBox}
+              >
+                <TextInput
+                  style={styles.durationInput}
+                  placeholder="Sec"
+                  keyboardType="number-pad"
+                  value={duration.seconds}
+                  onChangeText={(text) => {
+                    if (text === "" || isNumber(text)) setDuration({ ...duration, seconds: text });
+                  }}
+                />
+              </Animated.View>
+            </View>
+
+            <Animated.View entering={FadeInLeft.delay(700).duration(500).springify()}>
+              <TextInput
+                style={styles.input}
+                placeholder="Number of Sets"
+                keyboardType="number-pad"
+                value={sets}
+                onChangeText={(text) => {
+                  if (text === "" || isNumber(text)) setSets(text);
+                }}
+              />
+            </Animated.View>
+
+            <Animated.View entering={FadeInLeft.delay(800).duration(500).springify()}>
+              <TextInput
+                style={styles.input}
+                placeholder="Number of Reps"
+                keyboardType="number-pad"
+                value={reps}
+                onChangeText={(text) => {
+                  if (text === "" || isNumber(text)) setReps(text);
+                }}
+              />
+            </Animated.View>
+
+            <Animated.View entering={FadeInLeft.delay(900).duration(500).springify()}>
+              <View style={styles.weightRow}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Weight Lifted"
+                  keyboardType="decimal-pad"
+                  value={weight}
+                  onChangeText={(text) => {
+                    if (text === "" || isDecimal(text)) setWeight(text);
+                  }}
+                />
+                <Text style={styles.kgLabel}>kg</Text>
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInLeft.delay(1000).duration(1000).springify()}>
+              <TouchableOpacity
+                disabled={isInvalid || isLoading}
+                onPress={handleSubmit}
+                style={[styles.submitButton, (isInvalid || isLoading) && styles.disabled]}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Record</Text>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </SafeAreaView>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default WorkoutSubmit;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "white",
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
+    justifyContent: "center",
   },
-  innerWrapper: {
-    width: "100%",
-  },
-  logo: {
-    height: 128,
-    width: 128,
-    alignSelf: "center",
+  scrollWrapper: {
+    paddingBottom: 40,
   },
   title: {
-    textAlign: "center",
-    fontSize: 43,
+    fontSize: 40,
     fontWeight: "bold",
-    color: "rgb(57, 53, 53)",
+    textAlign: "center",
+    marginTop: 20,
+    color: "#333",
   },
   subtitle: {
     textAlign: "center",
-    fontSize: 25,
-    fontWeight: "bold",
-    color: "rgb(146, 136, 136)",
-  },
-  form: {
-    marginTop: 24,
-    gap: 20,
-  },
-  inputWrapper: {
-    position: "relative",
+    fontSize: 22,
+    color: "#888",
+    marginBottom: 20,
   },
   input: {
     paddingHorizontal: 12,
     paddingVertical: 16,
-    backgroundColor: "white",
-    fontSize: 16,
-    color: "#111827",
-    borderRadius: 12,
+    borderRadius: 8,
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    marginBottom: 22,
+    fontSize: 18,
   },
-  eyeIcon: {
-    position: "absolute",
-    right: 12,
-    top: 27,
-    transform: [{ translateY: -10 }],
+  dropdownContainer: {
+    zIndex: 10,
   },
-  error: {
-    color: "#ef4444",
-    fontSize: 14,
-    marginTop: 4,
+  dropdownWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 6,
+    maxHeight: 150,
+    zIndex: 100,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  dropdownScroll: {
+    maxHeight: 150,
+  },
+  dropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    fontSize: 18,
+    borderBottomColor: "#eee",
+    borderBottomWidth: 1,
+  },
+  workoutNameInput: {
+    marginTop: 10,
+  },
+  durationRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    gap: 8,
+  },
+  durationBox: {
+    flex: 1,
+  },
+  durationInput: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    borderRadius: 8,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    fontSize: 18,
+  },
+  weightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  kgLabel: {
+    fontSize: 18,
+    fontWeight: 600,
+    marginHorizontal: 26,
+    marginBottom: 25,
+    color: "#444",
   },
   submitButton: {
-    backgroundColor: "#4F46E5",
+    backgroundColor: "#7C3AED",
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   submitButtonText: {
     color: "white",
-    fontWeight: "600",
     fontSize: 20,
+    fontWeight: "bold",
   },
   disabled: {
     opacity: 0.5,
-  },
-  loginRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    paddingTop: 12,
-  },
-  loginText: {
-    fontSize: 14,
-    color: "#4B5563",
-  },
-  loginLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4F46E5",
-  },
-  dividerWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#D1D5DB",
-  },
-  orText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  googleWrapper: {
-    alignItems: "center",
-    paddingTop: 8,
-  },
-  googleButton: {
-    width: "100%",
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  googleButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
   },
 });
