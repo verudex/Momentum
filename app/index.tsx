@@ -18,7 +18,7 @@ const Startup = () => {
 
   return (
     <ImageBackground
-      source={require("../assets/images/PullupsBackground.png")} // replace with your actual image path
+      source={require("../assets/images/PullupsBackground.jpeg")} // replace with your actual image path
       style={styles.background}
       resizeMode="cover"
     >
