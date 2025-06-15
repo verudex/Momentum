@@ -4,7 +4,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ImageBackground, Image, Statu
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 const Startup = () => {
   const router = useRouter();
@@ -87,37 +87,31 @@ const styles = StyleSheet.create({
   curve: {
     position: "absolute",
     bottom: 0,
-    width: "100%",
-    height: 1200,
+    width: wp(100),
+    height: hp(150),
     zIndex: 0,
   },
   content: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: hp(2.5),
   },
   logo: {
-    width: 350,
-    height: 350,
+    width: wp(70),
+    height: hp(25),
     resizeMode: 'contain',
-    marginTop: 100,   // push it downward
-    marginBottom: -80, // pull content below it closer
+    marginTop: 0,   // push it downward
+    marginBottom: 0, // pull content below it closer
   },
   title: {
-    fontSize: 28,
+    fontSize: hp(3.5),
     color: 'rgb(42, 38, 38)',
     fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    marginBottom: hp(3),
   },
   buttonWrapper: {
-    width: '90%',
+    width: wp(85),
     alignSelf: 'center',
   },
   button: {
@@ -130,6 +124,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 30,
+    fontSize: hp(4),
   },
 });

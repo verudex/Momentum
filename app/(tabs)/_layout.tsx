@@ -3,6 +3,8 @@ import { Tabs } from 'expo-router';
 import { StatusBar } from 'react-native';
 import { FontAwesome6, Ionicons, AntDesign } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 const TabIcon = ({ focused, iconName, label, IconPack }) => {
   return (
@@ -37,18 +39,21 @@ const _layout = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <StatusBar barStyle="dark-content" />
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
           tabBarStyle: {
             backgroundColor: 'white',
-            height: 60 + (insets.bottom || 0),
-            paddingBottom: insets.bottom || 0,
-            paddingTop: 10,
+            height: hp(5) + (insets.bottom || 0),
+            paddingTop: hp(2),
             borderTopWidth: 0.5,
             borderTopColor: '#ccc',
+            elevation: 0,
+            shadowOpacity: 0,
+            shadowOffset: { height: 0 },
+            shadowRadius: 0, 
           },
         }}
       >
@@ -89,7 +94,7 @@ const _layout = () => {
           }}
         />
       </Tabs>
-    </View>
+    </SafeAreaView>
   );
 };
 

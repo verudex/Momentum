@@ -2,7 +2,7 @@ import { useContext, useEffect, useState, } from 'react';
 import { AuthContext } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
 import { 
-  StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator, Image 
+  StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator, Image, ScrollView 
         } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -86,8 +86,7 @@ const Profile = () => {
 
 
   return (
-    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
-      
+    <ScrollView>
       <Text style={styles.title}>Profile</Text>
 
       {/* <View style={styles.profilePicWrapper}>
@@ -188,7 +187,7 @@ const Profile = () => {
           )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </ScrollView>
   )
 }
 export default Profile

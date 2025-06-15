@@ -3,7 +3,6 @@ import { useAssetPreload } from "../../hooks/useAssetPreload";
 import { AuthContext } from "../../contexts/AuthContext";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -12,11 +11,9 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView,
 } from "react-native";
-import { useHeaderHeight } from "@react-navigation/elements";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
 import { googleSignIn, signIn } from "../../utils/signIn_Out";
@@ -58,123 +55,117 @@ const Login = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={100} // adjust if needed
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+    <View style={styles.container}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}>
-          {!assetsReady ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4F46E5" />
-            </View>
-          ) : (
-            <View style={styles.innerWrapper}>
-              <Animated.Image
-                entering={FadeInUp.duration(500).springify()}
-                style={styles.logo}
-                source={require("../../assets/images/MomentumLogo.png")}
-              />
+        {!assetsReady ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4F46E5" />
+          </View>
+        ) : (
+          <View style={styles.innerWrapper}>
+            <Animated.Image
+              entering={FadeInUp.duration(500).springify()}
+              style={styles.logo}
+              source={require("../../assets/images/MomentumLogo.png")}
+            />
 
-              <Animated.Text
-                entering={FadeInUp.delay(100).duration(500).springify()}
-                style={styles.title}
-              >
-                Sign in to your account
-              </Animated.Text>
+            <Animated.Text
+              entering={FadeInUp.delay(100).duration(500).springify()}
+              style={styles.title}
+            >
+              Sign in to your account
+            </Animated.Text>
 
-              <View style={styles.form}>
-                <Animated.View entering={FadeInDown.delay(200).duration(1000).springify()}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    onChangeText={setEmail}
-                    value={email}
-                  />
-                </Animated.View>
-
-                <Animated.View
-                  entering={FadeInDown.delay(300).duration(1000).springify()}
-                  style={styles.inputWrapper}
-                >
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    onChangeText={setPassword}
-                    value={password}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
-                  </TouchableOpacity>
-                </Animated.View>
-
-                <Animated.View entering={FadeInDown.delay(400).duration(1000).springify()}>
-                  <TouchableOpacity
-                    disabled={isInvalid || isLoading}
-                    onPress={handleLogin}
-                    style={[styles.button, (isInvalid || isLoading) && styles.disabled]}
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator color="white" />
-                    ) : (
-                      <Text style={styles.buttonText}>Sign in</Text>
-                    )}
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-
-              <Animated.View entering={FadeInDown.delay(500).duration(1000).springify()}>
-                <TouchableOpacity>
-                  <Text style={styles.forgot}>Forgot password?</Text>
-                </TouchableOpacity>
-              </Animated.View>
-
-              <Animated.View
-                entering={FadeInDown.delay(600).duration(1000).springify()}
-                style={styles.loginRow}
-              >
-                <Text style={styles.loginText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
-                  <Text style={styles.loginLink}>Register</Text>
-                </TouchableOpacity>
-              </Animated.View>
-
-              <Animated.View
-                entering={FadeInDown.delay(700).duration(1000).springify()}
-                style={styles.dividerWrapper}
-              >
-                <View style={styles.divider} />
-                <Text style={styles.orText}>or</Text>
-                <View style={styles.divider} />
-              </Animated.View>
-
-              <Animated.View
-                entering={FadeInDown.delay(800).duration(1000).springify()}
-                style={styles.googleWrapper}
-              >
-                <GoogleSigninButton
-                  size={GoogleSigninButton.Size.Wide}
-                  color={GoogleSigninButton.Color.Dark}
-                  onPress={handleGoogleSignIn}
+            <View style={styles.form}>
+              <Animated.View entering={FadeInDown.delay(200).duration(1000).springify()}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  onChangeText={setEmail}
+                  value={email}
                 />
               </Animated.View>
+
+              <Animated.View
+                entering={FadeInDown.delay(300).duration(1000).springify()}
+                style={styles.inputWrapper}
+              >
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  onChangeText={setPassword}
+                  value={password}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+                </TouchableOpacity>
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.delay(400).duration(1000).springify()}>
+                <TouchableOpacity
+                  disabled={isInvalid || isLoading}
+                  onPress={handleLogin}
+                  style={[styles.button, (isInvalid || isLoading) && styles.disabled]}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.buttonText}>Sign in</Text>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
             </View>
-          )}
-        </SafeAreaView>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+            <Animated.View entering={FadeInDown.delay(500).duration(1000).springify()}>
+              <TouchableOpacity>
+                <Text style={styles.forgot}>Forgot password?</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInDown.delay(600).duration(1000).springify()}
+              style={styles.loginRow}
+            >
+              <Text style={styles.loginText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+                <Text style={styles.loginLink}>Register</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInDown.delay(700).duration(1000).springify()}
+              style={styles.dividerWrapper}
+            >
+              <View style={styles.divider} />
+              <Text style={styles.orText}>or</Text>
+              <View style={styles.divider} />
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInDown.delay(800).duration(1000).springify()}
+              style={styles.googleWrapper}
+            >
+              <GoogleSigninButton
+                size={GoogleSigninButton.Size.Wide}
+                color={GoogleSigninButton.Color.Dark}
+                onPress={handleGoogleSignIn}
+              />
+            </Animated.View>
+          </View>
+        )}
+      </KeyboardAwareScrollView>
+    </View>
   );
 };
 
@@ -184,9 +175,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "white",
-    paddingHorizontal: 24,
+  },
+  contentContainer: {
+    paddingTop: hp(5),
+    paddingHorizontal: wp(7),
+    backgroundColor: "white",
   },
   loadingContainer: {
     flex: 1,

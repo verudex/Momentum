@@ -1,11 +1,9 @@
 import React, { useEffect, useState, useContext } from "react";
-import { useRouter } from "expo-router";
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
-  Dimensions,
   ActivityIndicator,
   Alert,
   NativeSyntheticEvent, 
@@ -24,9 +22,8 @@ import {
 } from 'firebase/firestore';
 import { AuthContext } from "../../contexts/AuthContext";
 import { app } from '../../utils/firebaseConfig';
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 type Workout = {
   id: string;
@@ -94,10 +91,8 @@ const WorkoutHistory = () => {
     }
   };
 
-  const screenHeight = Dimensions.get('window').height;
-
   return (
-    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 3}]}>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       <View style={styles.headerContainer}>
         <Animated.Text 
           entering={FadeInUp.duration(500).springify()}
@@ -115,23 +110,37 @@ const WorkoutHistory = () => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: 32 }} />
+        <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: hp(30) }} />
+      ) : workouts.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Animated.Text 
+            entering={FadeInUp.delay(300).duration(500).springify()}
+            style={styles.emptyText}
+          >
+            Nothing but crickets here... 🦗
+          </Animated.Text>
+
+          <Animated.Text 
+            entering={FadeInUp.delay(500).duration(500).springify()}
+            style={styles.emptyText}
+          >
+            Start your journey by recording a workout! 💪
+          </Animated.Text>
+        </View>
       ) : (
         <ScrollView 
-          style={styles.scrollArea} 
           onScroll={handleScroll} 
           scrollEventThrottle={16}
-          contentContainerStyle={{ paddingBottom: 32 }}
+          contentContainerStyle={styles.scrollArea}
         >
           {workouts.map((workout, idx) => (
             <Animated.View 
               entering={FadeInLeft.delay(idx % 10 * 200).duration(500).springify()}
-              key={workout.id} style={[styles.card, { height: screenHeight * 0.18 }]}
+              key={workout.id} style={styles.card}
             >
-              <Text 
-                adjustsFontSizeToFit 
-                numberOfLines={1}
-                style={styles.workoutName}>{workout.name}</Text>
+              <Text adjustsFontSizeToFit numberOfLines={1} style={styles.workoutName}>
+                {workout.name}
+              </Text>
               <Text style={styles.duration}>Duration: 
                 {workout.duration.hours ? ` ${workout.duration.hours}h` : ''}
                 {workout.duration.minutes ? ` ${workout.duration.minutes}m` : ''}
@@ -142,7 +151,7 @@ const WorkoutHistory = () => {
               <Text style={styles.timestamp}>
                 {new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-US', {
                   year: 'numeric',
-                  month: 'long', // 👈 full month name
+                  month: 'long',
                   day: 'numeric',
                 }) + ' at ' + new Date(workout.timestamp.seconds * 1000).toLocaleTimeString('en-US', {
                   hour: 'numeric',
@@ -152,85 +161,88 @@ const WorkoutHistory = () => {
               </Text>
             </Animated.View>
           ))}
-          {loadingMore && <ActivityIndicator size="small" color="rgb(146, 136, 136)" style={{ marginVertical: 16 }} />}
+          {loadingMore && (
+            <ActivityIndicator size="small" color="rgb(146, 136, 136)" style={{ marginVertical: hp(5) }} />
+          )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   )
 }
 
 export default WorkoutHistory
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  headerContainer: {
+    paddingBottom: wp(4),
     backgroundColor: 'white',
-    paddingHorizontal: 24,
-  },
-    headerContainer: {
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    zIndex: 1,
   },
   header: {
-    fontSize: 42,
+    fontSize: hp(6),
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 20,
     color: 'rgb(57, 53, 53)"',
   },
   subHeader: {
     textAlign: 'center',
     color: 'rgb(146, 136, 136)',
-    fontSize: 20,
-    marginBottom: 8,
+    fontSize: hp(3),
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: hp(18),
+    gap: hp(3),
+  },
+  emptyText: {
+    fontSize: hp(2.7),
+    color: '#888',
+    textAlign: 'center',
+    paddingHorizontal: wp(5),
   },
   scrollArea: {
-    flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: wp(6),
+    backgroundColor: "white",
   },
   card: {
-    backgroundColor: '#F3F4F6',
+    height: hp(25),
+    backgroundColor: 'white',
     borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginVertical: 8,
-
-    // iOS shadow
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1),
+    marginVertical: hp(1.5),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-
-    // Android shadow
     elevation: 4,
   },
   workoutName: {
-    fontSize: 28,
+    fontSize: hp(3.5),
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 4,
+    marginBottom: hp(1),
   },
   duration: {
-    fontSize: 18,
+    fontSize: hp(2.7),
     fontWeight: '300',
     color: '#111827',
-    marginBottom: 6,
+    marginBottom: hp(1),
   },
   sets: {
-    fontSize: 18,
+    fontSize: hp(2.7),
     fontWeight: '300',
     color: '#111827',
-    marginBottom: 6,
+    marginBottom: hp(1),
   },
   weightLifted: {
-    fontSize: 18,
+    fontSize: hp(2.7),
     fontWeight: '300',
     color: '#111827',
-    marginBottom: 6,
+    marginBottom: hp(1),
   },
   timestamp: {
-    fontSize: 12,
+    fontSize: hp(2),
     color: '#9CA3AF',
   },
 });
