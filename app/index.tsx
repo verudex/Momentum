@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useEffect } from "react";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
-import { StyleSheet, Text, View, TouchableOpacity, ImageBackground, Image, StatusBar } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, ImageBackground, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -25,44 +25,49 @@ const Startup = () => {
       <StatusBar barStyle="light-content" />
       <View style={styles.overlay} />
 
-      <Animated.Image
-        entering={FadeInDown.duration(1000).springify()}      
-        source={require("../assets/images/CurvedBackground.png")} // your white curve image
-        style={styles.curve}
-        resizeMode="cover"
-      />
-
-      <SafeAreaView style={styles.content}>
+      <SafeAreaView style={styles.container}>
         <Animated.Image
-          entering={FadeInUp.delay(500).duration(1000).springify()} 
-          style={styles.logo}
-          source={require("../assets/images/MomentumLogoBlackTransparent.png")}
+          entering={FadeInDown.duration(1000).springify()}      
+          source={require("../assets/images/CurvedBackground.png")} // your white curve image
+          style={styles.curve}
         />
 
-        <Animated.Text 
-          entering={FadeInUp.delay(500).duration(1000).springify()}
-          style={styles.title}>
-          Join the Momentum.
-        </Animated.Text>
+        <View style={styles.contentWrapper}>
+          <View style={styles.logoWrapper}>
+            <Animated.Image
+              entering={FadeInUp.delay(500).duration(1000).springify()} 
+              style={styles.logo}
+              source={require("../assets/images/MomentumLogoBlackTransparent.png")}
+            />
+          </View>
 
-        <View style={styles.buttonWrapper}>
-          <Animated.View entering={FadeInDown.delay(500).duration(1000).springify()}>
-            <TouchableOpacity 
-              onPress={() => router.push("/(auth)/register")}
-              style={[styles.button, { backgroundColor: 'rgba(10, 132, 255, 1)' }]}
-            >
-              <Text style={styles.buttonText}>✨ Start now</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          <View style={styles.subtitleWrapper}>
+            <Animated.Text 
+              entering={FadeInUp.delay(500).duration(1000).springify()}
+              style={styles.subTitle}>
+              Join the Momentum.
+            </Animated.Text>
+          </View>
 
-          <Animated.View entering={FadeInDown.delay(700).duration(1000).springify()}>
-            <TouchableOpacity 
-              onPress={() => router.push("/(auth)/login")}
-              style={[styles.button, { backgroundColor: 'rgba(44, 44, 46, 1) ' }]}
-            >
-              <Text style={styles.buttonText}>Log in</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          <View style={styles.buttonWrapper}>
+            <Animated.View entering={FadeInDown.delay(500).duration(1000).springify()}>
+              <TouchableOpacity 
+                onPress={() => router.push("/(auth)/register")}
+                style={[styles.button, { backgroundColor: 'rgba(10, 132, 255, 1)' }]}
+              >
+                <Text style={styles.buttonText}>✨ Start now</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(700).duration(1000).springify()}>
+              <TouchableOpacity 
+                onPress={() => router.push("/(auth)/login")}
+                style={[styles.button, { backgroundColor: 'rgba(44, 44, 46, 1) ' }]}
+              >
+                <Text style={styles.buttonText}>Log in</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
         </View>
       </SafeAreaView>
     </ImageBackground>
@@ -77,7 +82,7 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -87,43 +92,52 @@ const styles = StyleSheet.create({
   curve: {
     position: "absolute",
     bottom: 0,
-    width: wp(100),
-    height: hp(150),
-    zIndex: 0,
+    width: "100%",
+    height: "300%",
   },
-  content: {
+  container: {
+    height: hp(50),
+  },
+  contentWrapper: {
     flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginBottom: hp(2.5),
+    alignItems: "center",
+  },
+  logoWrapper: {
+    flex: 1,
+    justifyContent: 'center',
   },
   logo: {
     width: wp(70),
     height: hp(25),
-    resizeMode: 'contain',
     marginTop: 0,   // push it downward
     marginBottom: 0, // pull content below it closer
+    resizeMode: "contain",
   },
-  title: {
-    fontSize: hp(3.5),
+  subtitleWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingTop: "4%",
+  },
+  subTitle: {
+    fontSize: hp(3.2),
     color: 'rgb(42, 38, 38)',
     fontWeight: 'bold',
-    marginBottom: hp(3),
+    textAlign: "center",
   },
   buttonWrapper: {
+    flex: 2,
     width: wp(85),
-    alignSelf: 'center',
+    gap: hp(2),
   },
   button: {
-    paddingVertical: 12,
+    paddingVertical: "4%",
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
   },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: hp(4),
+    fontSize: hp(3.8),
   },
 });

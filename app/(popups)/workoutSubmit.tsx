@@ -83,6 +83,8 @@ const WorkoutSubmit = () => {
         keyboardShouldPersistTaps="handled"
       >
         <Animated.Text 
+          adjustsFontSizeToFit
+          numberOfLines={1}
           entering={FadeInUp.duration(500).springify()} 
           style={styles.title}
         >
@@ -254,7 +256,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: hp(3),
     color: "#888",
-    marginBottom: hp(1.7),
+    marginBottom: hp(1),
   },
   input: {
     paddingHorizontal: wp(3),
@@ -272,7 +274,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: "center",
     width: wp(86),
-    top: hp(24),
+    top: "25%",
     left: wp(7),
     backgroundColor: "#fff",
     borderColor: "#ddd",

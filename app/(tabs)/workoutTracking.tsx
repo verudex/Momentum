@@ -16,6 +16,8 @@ const WorkoutTracking = () => {
     <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
       <View style={styles.innerWrapper}>
         <Animated.Text 
+          adjustsFontSizeToFit
+          numberOfLines={1}
           entering={FadeInUp.duration(500).springify()}
           style={styles.title}
         >
@@ -23,6 +25,8 @@ const WorkoutTracking = () => {
         </Animated.Text>
 
         <Animated.Text 
+          adjustsFontSizeToFit
+          numberOfLines={1}
           entering={FadeInUp.delay(200).duration(500).springify()}
           style={styles.subtitle}
         >
@@ -90,7 +94,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: "center",
-    fontSize: hp(3.2),
+    fontSize: hp(2.5),
     fontWeight: "bold",
     color: "rgb(146, 136, 136)",
   },

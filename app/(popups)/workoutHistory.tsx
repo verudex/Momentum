@@ -95,6 +95,8 @@ const WorkoutHistory = () => {
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <View style={styles.headerContainer}>
         <Animated.Text 
+          adjustsFontSizeToFit
+          numberOfLines={1}
           entering={FadeInUp.duration(500).springify()}
           style={styles.header}
         >
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   header: {
-    fontSize: hp(6),
+    fontSize: hp(5),
     fontWeight: 'bold',
     textAlign: 'center',
     color: 'rgb(57, 53, 53)"',
