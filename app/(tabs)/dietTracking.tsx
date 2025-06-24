@@ -1,143 +1,199 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TextInput, View, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { KeyboardAwareScrollView, KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useDisableBack } from "../../hooks/useDisableBack";
+import { AuthContext } from "../../contexts/AuthContext";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { getFirestore, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { app } from "../../utils/firebaseConfig";
+import { API_BASE_URL } from "@env";
 
 const DietTracking = () => {
   useDisableBack();
-  
-  return (
-    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
-      
-      <Text className="text-5xl text-dark-200 font-bold mb-6 text-center">Diet Tracking</Text>
+  const { user } = useContext(AuthContext);
 
-    </SafeAreaView>
+  const [foodName, setFoodName] = useState("");
+  const [foodAmount, setFoodAmount] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isInvalid = !foodName || !foodAmount;
+
+  const db = getFirestore(app);
+
+  const getCalories = async (userInput: string) => {
+    console.log("Submit button clicked");
+    setIsLoading(true);
+    if (user == null) {
+      Alert.alert("Error", "User not logged in.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/calculate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ input: userInput }),
+      });
+
+      const data = await response.json();
+      if (data.result) {
+        const cleanResult = String(data.result).replace(/\s+/g, ' ').trim();
+        console.log("Calories estimated:", cleanResult);
+        Alert.alert("Estimated calories consumed: ", `${cleanResult} calories`)
+        await addDoc(
+          collection(db, "Users", user.uid, "diet"), // nested path
+          {
+            food: userInput,
+            calories: cleanResult,
+            timestamp: serverTimestamp(),
+          }
+        );
+        console.log("Successfully recorded!")
+      } else {
+        console.log("No result returned");
+      }
+    } catch (error) {
+      console.error("Error calling backend:", error);
+    } finally {
+      setFoodName("");
+      setFoodAmount("");
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardProvider>
+      <SafeAreaView style={styles.container}>
+        
+        <KeyboardAwareScrollView
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.titleWrapper}>
+            <Animated.Text 
+              adjustsFontSizeToFit
+              numberOfLines={1}
+              entering={FadeInUp.duration(500).springify()}
+              style={styles.title}
+            >
+              Diet Tracking
+            </Animated.Text>
+          </View>
+
+          <View style={styles.subtitleWrapper}>
+            <Animated.Text
+              adjustsFontSizeToFit
+              numberOfLines={1}
+              entering={FadeInUp.delay(200).duration(500).springify()}
+              style={styles.subtitle}
+            >
+              What did you eat today?
+            </Animated.Text>
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Animated.View entering={FadeInLeft.delay(300).duration(500).springify()}>
+              <TextInput
+                style={styles.input}
+                placeholder="Name of Food/Meal"
+                value={foodName}
+                onChangeText={(food) => setFoodName(food)}
+              />
+            </Animated.View>
+
+            <Animated.View entering={FadeInLeft.delay(400).duration(500).springify()}>
+              <TextInput
+                style={styles.input}
+                placeholder="Amount/Volume"
+                value={foodAmount}
+                onChangeText={(amount) => setFoodAmount(amount)}
+              />
+            </Animated.View>
+          </View>
+
+          <Animated.View entering={FadeInLeft.delay(500).duration(500).springify()}>
+            <TouchableOpacity
+              disabled={isInvalid || isLoading}
+              onPress={() => getCalories(foodAmount + " " + foodName)}
+              style={[styles.submitButton, (isInvalid || isLoading) && styles.disabled]}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.submitButtonText}>Record</Text>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+        </KeyboardAwareScrollView>
+
+      </SafeAreaView>
+    </KeyboardProvider>
   )
 }
 
-export default DietTracking
+export default DietTracking;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "white",
-    paddingHorizontal: 24,
+    paddingHorizontal: wp(8),
+  },
+  contentContainer: {
+    backgroundColor: "white",
+    paddingTop: hp(10),
   },
   innerWrapper: {
-    width: "100%",
+    width: wp(85),
   },
-  logo: {
-    height: 128,
-    width: 128,
-    alignSelf: "center",
+  titleWrapper: {
+    marginTop: hp(2),
   },
   title: {
     textAlign: "center",
-    fontSize: 24,
+    fontSize: hp(5.7),
     fontWeight: "bold",
-    color: "#111827",
-    marginTop: 16,
+    color: "rgb(57, 53, 53)",
   },
-  form: {
-    marginTop: 24,
-    gap: 20,
+  subtitleWrapper: {
+  },
+  subtitle: {
+    textAlign: "center",
+    fontSize: hp(2.5),
+    fontWeight: "bold",
+    color: "rgb(146, 136, 136)",
   },
   inputWrapper: {
-    position: "relative",
+    marginVertical: hp(3),
+    gap: hp(2),
   },
   input: {
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    backgroundColor: "white",
-    fontSize: 16,
-    color: "#111827",
-    borderRadius: 12,
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(2.7),
+    borderRadius: 8,
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    fontSize: hp(2),
   },
-  eyeIcon: {
-    position: "absolute",
-    right: 12,
-    top: 27,
-    transform: [{ translateY: -10 }],
-  },
-  error: {
-    color: "#ef4444",
-    fontSize: 14,
-    marginTop: 4,
-  },
-  registerButton: {
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
+  submitButton: {
+    backgroundColor: "#7C3AED",
+    paddingVertical: hp(2),
+    borderRadius: 10,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
-  registerButtonText: {
+  submitButtonText: {
     color: "white",
-    fontWeight: "600",
-    fontSize: 16,
+    fontSize: hp(3),
+    fontWeight: "bold",
   },
   disabled: {
     opacity: 0.5,
-  },
-  loginRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    paddingTop: 12,
-  },
-  loginText: {
-    fontSize: 14,
-    color: "#4B5563",
-  },
-  loginLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4F46E5",
-  },
-  dividerWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#D1D5DB",
-  },
-  orText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  googleWrapper: {
-    alignItems: "center",
-    paddingTop: 8,
-  },
-  googleButton: {
-    width: "100%",
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  googleButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
   },
 });
