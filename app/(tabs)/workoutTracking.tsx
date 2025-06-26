@@ -97,13 +97,14 @@ const styles = StyleSheet.create({
     fontSize: hp(2.5),
     fontWeight: "bold",
     color: "rgb(146, 136, 136)",
+    marginBottom: hp(1.5),
   },
   historyButton: {
     width: "100%",
     marginTop: hp(2),
     backgroundColor: "rgb(76, 72, 159)",
     paddingVertical: hp(3),
-    borderRadius: 12,
+    borderRadius: 30,
     alignItems: "center",
   },
   historyButtonText: {
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: hp(2.5),
+    marginVertical: hp(2),
   },
   divider: {
     flex: 1,
@@ -130,14 +131,13 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     alignItems: "center",
-    paddingTop: hp(1.5),
     backgroundColor: "transparent",
   },
   submitButton: {
     width: "100%",
     backgroundColor: "rgb(79, 70, 229)",
     paddingVertical: hp(3),
-    borderRadius: 12,
+    borderRadius: 30,
     alignItems: "center",
   },
   submitButtonText: {

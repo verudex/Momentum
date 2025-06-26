@@ -266,19 +266,19 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   input: {
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingHorizontal: wp(4.5),
+    paddingVertical: hp(2),
     backgroundColor: "white",
-    fontSize: 16,
+    fontSize: hp(2),
     color: "#111827",
-    borderRadius: 12,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: "#D1D5DB",
   },
   eyeIcon: {
     position: "absolute",
-    right: 12,
-    top: 27,
+    right: wp(5),
+    top: hp(3.3),
     transform: [{ translateY: -10 }],
   },
   error: {
@@ -288,8 +288,8 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: hp(2),
+    borderRadius: 25,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   registerButtonText: {
     color: "white",
     fontWeight: "600",
-    fontSize: 16,
+    fontSize: hp(2),
   },
   disabled: {
     opacity: 0.5,
@@ -329,6 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: "#D1D5DB",
+    marginTop: hp(0.6),
   },
   orText: {
     marginHorizontal: 16,

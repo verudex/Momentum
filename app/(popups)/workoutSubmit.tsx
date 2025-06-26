@@ -79,6 +79,7 @@ const WorkoutSubmit = () => {
   
   return (
       <KeyboardAwareScrollView
+        style={{ backgroundColor: "white" }}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
@@ -259,13 +260,13 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   input: {
-    paddingHorizontal: wp(3),
+    paddingHorizontal: wp(4),
     paddingVertical: hp(2.7),
-    borderRadius: 8,
+    borderRadius: 30,
     borderColor: "#ccc",
     borderWidth: 1,
     marginBottom: hp(3),
-    fontSize: hp(3),
+    fontSize: hp(2.5),
   },
   dropdownContainer: {
     zIndex: 10,
@@ -312,20 +313,20 @@ const styles = StyleSheet.create({
   },
   durationInput: {
     flex: 1,
-    paddingHorizontal: wp(3),
+    paddingHorizontal: wp(4),
     paddingVertical: hp(2.5),
-    borderRadius: 8,
+    borderRadius: 30,
     borderColor: "#ccc",
     borderWidth: 1,
-    fontSize: hp(3),
+    fontSize: hp(2.5),
   },
   weightRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: hp(1.2),
+    marginBottom: hp(0.5),
   },
   kgLabel: {
-    fontSize: hp(3),
+    fontSize: hp(2.5),
     fontWeight: "bold",
     marginHorizontal: wp(7),
     marginBottom: hp(4),
@@ -334,12 +335,12 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: "#7C3AED",
     paddingVertical: hp(2.7),
-    borderRadius: 10,
+    borderRadius: 30,
     alignItems: "center",
   },
   submitButtonText: {
     color: "white",
-    fontSize: hp(3),
+    fontSize: hp(2.5),
     fontWeight: "bold",
   },
   disabled: {

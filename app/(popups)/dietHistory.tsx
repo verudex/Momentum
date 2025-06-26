@@ -25,30 +25,24 @@ import { app } from '../../utils/firebaseConfig';
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
-type Workout = {
+type Food = {
   id: string;
   name: string;
-  duration: {
-    hours: string;
-    minutes: string;
-    seconds: string;
-  };
-  sets: string;
-  reps: string;
-  weight: string,
+  amount: string;
+  calories: string;
   timestamp: any;
 };
 
-const WorkoutHistory = () => {
+const DietHistory = () => {
   const db = getFirestore(app);
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [foods, setFoods] = useState<Food[]>([]);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [endReached, setEndReached] = useState(false);
   const { user } = useContext(AuthContext);
 
-  const fetchWorkouts = async (loadMore = false) => {
+  const fetchFood = async (loadMore = false) => {
     if (user == null) {
       Alert.alert("Error", "User not logged in.");
       return;
@@ -57,19 +51,19 @@ const WorkoutHistory = () => {
     if (loadMore && endReached) return;
 
     const baseQuery = query(
-      collection(db, 'Users', user.uid, 'workouts'),
+      collection(db, 'Users', user.uid, 'diet'),
       orderBy('timestamp', 'desc'),
       ...(loadMore && lastDoc ? [startAfter(lastDoc)] : []),
       limit(10)
     );
 
     const snapshot = await getDocs(baseQuery);
-    const newWorkouts: Workout[] = snapshot.docs.map(doc => ({
+    const newFoods: Food[] = snapshot.docs.map(doc => ({
       id: doc.id,
-      ...(doc.data() as Omit<Workout, 'id'>)  // Ensures full Workout object
+      ...(doc.data() as Omit<Food, 'id'>)
     }));
 
-    setWorkouts(prev => (loadMore ? [...prev, ...newWorkouts] : newWorkouts));
+    setFoods(prev => (loadMore ? [...prev, ...newFoods] : newFoods));
     setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
     setEndReached(snapshot.empty);
     setLoading(false);
@@ -77,7 +71,7 @@ const WorkoutHistory = () => {
   };
 
   useEffect(() => {
-    fetchWorkouts();
+    fetchFood();
   }, []);
 
   const handleScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -87,50 +81,51 @@ const WorkoutHistory = () => {
 
     if (bottomReached && !loadingMore && !endReached) {
       setLoadingMore(true);
-      fetchWorkouts(true);
+      fetchFood(true);
     }
   };
 
   const getShiftedDayKey = (timestamp: any) => {
     const date = new Date(timestamp.seconds * 1000);
-    const clone = new Date(date);
-    if (clone.getHours() < 5) clone.setDate(clone.getDate() - 1);
-    return clone.toDateString();
+    const clone = new Date(date); // clone to avoid mutation
+
+    // If before 5AM, treat it as part of the *previous day*
+    if (clone.getHours() < 5) {
+      clone.setDate(clone.getDate() - 1);
+    }
+
+    return clone.toDateString(); // e.g., "Wed Jun 26 2025"
   };
 
-  const renderedWorkoutList = () => {
+  const renderedFoodList = () => {
     let lastDayKey: string | null = null;
 
-    return workouts.map((workout, idx) => {
-      const currentDayKey = getShiftedDayKey(workout.timestamp);
+    return foods.map((food, idx) => {
+      const currentDayKey = getShiftedDayKey(food.timestamp);
       const showDivider = currentDayKey !== lastDayKey;
       lastDayKey = currentDayKey;
 
       return (
-        <React.Fragment key={workout.id}>
+        <React.Fragment key={food.id}>
           {showDivider && (
             <Text style={styles.dateDivider}>{currentDayKey}</Text>
           )}
+
           <Animated.View
             entering={FadeInLeft.delay(idx % 10 * 200).duration(500).springify()}
             style={styles.card}
           >
-            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.workoutName}>
-              {workout.name}
+            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.foodName}>
+              {food.name}
             </Text>
-            <Text style={styles.duration}>Duration:
-              {workout.duration.hours ? ` ${workout.duration.hours}h` : ''}
-              {workout.duration.minutes ? ` ${workout.duration.minutes}m` : ''}
-              {workout.duration.seconds ? ` ${workout.duration.seconds}s` : ''}
-            </Text>
-            <Text style={styles.sets}>Sets: {workout.sets} | Reps: {workout.reps}</Text>
-            <Text style={styles.weightLifted}>Weight lifted: {workout.weight}</Text>
+            <Text style={styles.foodAmount}>Amount: {food.amount}</Text>
+            <Text style={styles.foodCalories}>Calories: {food.calories}</Text>
             <Text style={styles.timestamp}>
-              {new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-US', {
+              {new Date(food.timestamp.seconds * 1000).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
-              }) + ' at ' + new Date(workout.timestamp.seconds * 1000).toLocaleTimeString('en-US', {
+              }) + ' at ' + new Date(food.timestamp.seconds * 1000).toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true,
@@ -151,7 +146,7 @@ const WorkoutHistory = () => {
           entering={FadeInUp.duration(500).springify()}
           style={styles.header}
         >
-          Workout History
+          Food History
         </Animated.Text>
 
         <Animated.Text
@@ -164,7 +159,7 @@ const WorkoutHistory = () => {
 
       {loading ? (
         <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: hp(30) }} />
-      ) : workouts.length === 0 ? (
+      ) : foods.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Animated.Text
             entering={FadeInUp.delay(300).duration(500).springify()}
@@ -177,7 +172,7 @@ const WorkoutHistory = () => {
             entering={FadeInUp.delay(500).duration(500).springify()}
             style={styles.emptyText}
           >
-            Start your journey by recording a workout! 💪
+            Start tracking by recording a meal! 🍎
           </Animated.Text>
         </View>
       ) : (
@@ -186,7 +181,7 @@ const WorkoutHistory = () => {
           scrollEventThrottle={16}
           contentContainerStyle={styles.scrollArea}
         >
-          {renderedWorkoutList()}
+          {renderedFoodList()}
           {loadingMore && (
             <ActivityIndicator size="small" color="rgb(146, 136, 136)" style={{ marginVertical: hp(5) }} />
           )}
@@ -196,7 +191,7 @@ const WorkoutHistory = () => {
   )
 }
 
-export default WorkoutHistory
+export default DietHistory
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -231,7 +226,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   card: {
-    height: hp(25),
+    height: hp(21),
     backgroundColor: 'white',
     borderRadius: 20,
     paddingHorizontal: wp(4),
@@ -243,33 +238,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  workoutName: {
+  foodName: {
     fontSize: hp(3.5),
     fontWeight: '600',
     color: '#111827',
     marginBottom: hp(1),
   },
-  duration: {
+  foodAmount: {
     fontSize: hp(2.7),
     fontWeight: '300',
     color: '#111827',
     marginBottom: hp(1),
   },
-  sets: {
+  foodCalories: {
     fontSize: hp(2.7),
     fontWeight: '300',
     color: '#111827',
     marginBottom: hp(1),
-  },
-  weightLifted: {
-    fontSize: hp(2.7),
-    fontWeight: '300',
-    color: '#111827',
-    marginBottom: hp(1),
-  },
-  timestamp: {
-    fontSize: hp(2),
-    color: '#9CA3AF',
   },
   dateDivider: {
     fontSize: hp(2.2),
@@ -282,5 +267,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: hp(1),
     overflow: 'hidden',
-  }
+  },
+  timestamp: {
+    fontSize: hp(2),
+    color: '#9CA3AF',
+  },
 });
