@@ -128,7 +128,7 @@ const Login = () => {
             </View>
 
             <Animated.View entering={FadeInDown.delay(500).duration(1000).springify()}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push("/(auth)/passwordReset")}>
                 <Text style={styles.forgot}>Forgot password?</Text>
               </TouchableOpacity>
             </Animated.View>

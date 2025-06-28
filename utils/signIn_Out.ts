@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithCredential,
   GoogleAuthProvider,
+  sendEmailVerification,
   signOut as firebaseSignOut,
   User
 } from "firebase/auth";
@@ -16,7 +17,7 @@ import { createUserProfile } from "./userFirestore";
 // Get modular Firebase Auth instance
 const auth = getAuth(app);
 
-// 🔒 Handle Firebase Auth errors
+// Handle Firebase Auth errors
 const handleAuthError = (error: any) => {
   console.error("Auth error:", error);
   switch (error.code) {
@@ -43,9 +44,8 @@ const handleAuthError = (error: any) => {
   }
 };
 
-//
-// ✅ Google Sign-In
-//
+
+// Google Sign-In
 export const googleSignIn = async (setUser: (user: User) => void) => {
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -85,9 +85,8 @@ export const googleSignIn = async (setUser: (user: User) => void) => {
   }
 };
 
-//
-// ✅ Email Sign-In
-//
+
+// Email Sign-In
 export const signIn = async (
   email: string,
   password: string,
@@ -95,24 +94,57 @@ export const signIn = async (
 ) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    setUser(userCredential.user);
-    if (!userCredential.user.email) {
-      throw new Error("Google account did not return an email.");
+    const user = userCredential.user;
+
+    // Refresh user info to get latest emailVerified value
+    await user.reload();
+
+    if (!user.emailVerified) {
+      Alert.alert(
+        "Email Not Verified",
+        "Please verify your email before logging in.",
+        [
+          {
+            text: "Resend Verification",
+            onPress: () => sendVerificationLink(user),
+          },
+          { text: "OK", style: "cancel" },
+        ]
+      );
+      return; 
     }
 
+    setUser(user);
+
     await createUserProfile({
-      uid: userCredential.user.uid,
-      email: userCredential.user.email,
+      uid: user.uid,
+      email: user.email!,
     });
+
     router.replace("/(tabs)/home");
+
   } catch (error) {
     handleAuthError(error);
   }
 };
 
-//
-// ✅ Email Register
-//
+
+// Email Verification
+const sendVerificationLink = async (user: User) => {
+  try {
+    if (!user.emailVerified) {
+      await sendEmailVerification(user);
+      Alert.alert("Email Verification Sent", "Please check your inbox to verify your account.");
+    } else {
+      console.log("User already verified.");
+    }
+  } catch (error: any) {
+    console.error("Verification error:", error);
+    Alert.alert("Error", error.message || "Failed to send verification email.");
+  }
+};
+
+// Email Register
 export const emailRegister = async (
   email: string,
   password: string,
@@ -129,15 +161,16 @@ export const emailRegister = async (
       uid: userCredential.user.uid,
       email: userCredential.user.email,
     });
-    router.replace("/(tabs)/home");
+
+    await sendVerificationLink(userCredential.user); // Sends verification link
+
+    Alert.alert("Please verify your email and log in again!")
   } catch (error) {
     handleAuthError(error);
   }
 };
 
-//
-// ✅ Sign-Out (Google or Email)
-//
+// Sign-Out (Google or Email)
 export const signOut = async (setUser: (user: null) => void) => {
   try {
     await firebaseSignOut(auth);
