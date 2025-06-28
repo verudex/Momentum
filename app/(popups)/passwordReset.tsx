@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+import { AuthProvider } from '../../contexts/AuthContext';
 
 const PasswordResetButton = () => {
   const [email, setEmail] = useState('');
@@ -37,28 +38,30 @@ const PasswordResetButton = () => {
   const styles = getStyles(isDark);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.screen}
-    >
-      <View style={styles.card}>
-        <Text style={styles.title}>Reset Your Password</Text>
+    <AuthProvider>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.screen}
+      >
+        <View style={styles.card}>
+          <Text style={styles.title}>Reset Your Password</Text>
 
-        <TextInput
-          placeholder="example@email.com"
-          placeholderTextColor={isDark ? '#aaa' : '#666'}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="example@email.com"
+            placeholderTextColor={isDark ? '#aaa' : '#666'}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={styles.input}
+          />
 
-        <Pressable style={styles.button} onPress={handlePasswordReset}>
-          <Text style={styles.buttonText}>Send Reset Email</Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+          <Pressable style={styles.button} onPress={handlePasswordReset}>
+            <Text style={styles.buttonText}>Send Reset Email</Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </AuthProvider>
   );
 };
 
@@ -68,13 +71,13 @@ const getStyles = (isDark: boolean) =>
   StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: isDark ? '#0f172a' : 'white',
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 20,
     },
     card: {
-      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+      backgroundColor: isDark ? '#1e293b' : 'white',
       width: '100%',
       maxWidth: 400,
       padding: 24,
