@@ -1,14 +1,12 @@
 import React, { useContext, useState } from "react";
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { KeyboardAwareScrollView, KeyboardProvider } from "react-native-keyboard-controller";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { AuthContext } from "../../contexts/AuthContext";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { getFirestore, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
-import { API_BASE_URL } from "@env";
+// import { API_BASE_URL } from "@env";
 
 const DietSubmit = () => {
 	const { user } = useContext(AuthContext);
@@ -31,6 +29,8 @@ const DietSubmit = () => {
 		}
 
 		try {
+			const API_BASE_URL = "https://momentum-mbw7.onrender.com";
+
 			const response = await fetch(`${API_BASE_URL}/api/calculate`, {
 				method: "POST",
 				headers: {

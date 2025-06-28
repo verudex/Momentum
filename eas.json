@@ -17,6 +17,14 @@
       "ios": {
         "simulator": true
       }
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
     }
   },
   "submit": {
