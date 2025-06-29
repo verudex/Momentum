@@ -226,11 +226,10 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   card: {
-    height: hp(21),
     backgroundColor: 'white',
     borderRadius: 20,
     paddingHorizontal: wp(4),
-    paddingVertical: hp(1),
+    paddingVertical: hp(2),
     marginVertical: hp(1.5),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

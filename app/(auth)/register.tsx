@@ -64,6 +64,10 @@ const Register = () => {
 
     setIsLoading(true);
     await emailRegister(email, password, setUser);
+    setEmail("");
+    setUsername("");
+    setPassword("");
+    setConfirmPassword("");
     setIsLoading(false);
   };
 

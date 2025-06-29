@@ -74,7 +74,7 @@ const DietSubmit = () => {
         <Animated.View entering={FadeInLeft.delay(300).duration(500).springify()}>
           <TextInput
             style={styles.input}
-            placeholder="Target Calories"
+            placeholder="Target Calories*"
             keyboardType="number-pad"
             value={target}
             onChangeText={(text) => {
@@ -128,7 +128,7 @@ const DietSubmit = () => {
           {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.submitButtonText}>Record</Text>
+            <Text style={styles.submitButtonText}>Save</Text>
           )}
         </TouchableOpacity>
       </Animated.View>

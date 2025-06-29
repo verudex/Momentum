@@ -108,7 +108,7 @@ const WorkoutSubmit = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder="Workout Name"
+            placeholder="Workout Name*"
             value={workoutName}
             onChangeText={handleWorkoutInput}
           />

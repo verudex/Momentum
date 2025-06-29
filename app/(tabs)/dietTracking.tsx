@@ -1,17 +1,14 @@
 import React, { useContext, useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TextInput, View, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
-import { KeyboardAwareScrollView, KeyboardProvider } from "react-native-keyboard-controller";
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { useDisableBack } from "../../hooks/useDisableBack";
 import { AuthContext } from "../../contexts/AuthContext";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 import { app } from "../../utils/firebaseConfig";
-import { API_BASE_URL } from "@env";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import CircularProgress from "../../components/CircularProgress";
 
@@ -23,7 +20,7 @@ const DietTracking = () => {
 
   const [percentage, setPercentage] = useState(0);
   const [remainingCalories, setRemainingCalories] = useState(0);
-  const [mode, setMode] = useState("deficit"); // or "surplus"
+  const [mode, setMode] = useState("deficit");
   const [loading, setLoading] = useState(true);
 
   const db = getFirestore(app);
@@ -87,121 +84,114 @@ const DietTracking = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.innerWrapper}>
-        <View style={styles.titleWrapper}>
-          <Animated.Text
-            adjustsFontSizeToFit
-            numberOfLines={1}
-            entering={FadeInUp.duration(500).springify()}
-            style={styles.title}
-          >
-            Diet Tracking
-          </Animated.Text>
-        </View>
-
-        <View style={styles.subtitleWrapper}>
-          <Animated.Text
-            adjustsFontSizeToFit
-            numberOfLines={1}
-            entering={FadeInUp.delay(200).duration(500).springify()}
-            style={styles.subtitle}
-          >
-            What did you eat today?
-          </Animated.Text>
-        </View>
-
-        {loading ? (
-          <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: hp(0) }} />
-        ) : (
-          <>
-            <CircularProgress 
-              percentage={percentage} 
-              size={hp(25)} 
-              color="#10B981"
-              bgColor="rgb(57, 53, 53)"
-            />
-
-            {remainingCalories !== null && (
-              <View style={{ alignItems: "center" }}>
-                {mode === "deficit" ? (
-                  <Text
-                    style={{
-                      fontSize: hp(2.3),
-                      fontWeight: "bold",
-                      color: remainingCalories < 0 ? "red" : "black",
-                      paddingHorizontal: wp(3),
-                      textAlign: "center",
-                    }}
-                  >
-                    {remainingCalories < 0
-                      ? `${Math.abs(remainingCalories)} calories exceeded today.`
-                      : `${remainingCalories} remaining calories until target exceeded.`}
-                  </Text>
-                ) : (
-                  <Text
-                    style={{
-                      fontSize: hp(2.3),
-                      fontWeight: "bold",
-                      color: remainingCalories < 0 ? "green" : "black",
-                      paddingHorizontal: wp(3),
-                      textAlign: "center",
-                    }}
-                  >
-                    {remainingCalories < 0
-                      ? `${Math.abs(remainingCalories)} extra calories consumed today.`
-                      : `${remainingCalories} remaining calories to hit target.`}
-                  </Text>
-                )}
-              </View>
-            )}
-          </>
-        )}
-
-        <View style={styles.buttonsWrapper}>
-          <Animated.View
-            entering={FadeInLeft.delay(300).duration(1000).springify()}
-          >
-            <TouchableOpacity
-              style={styles.recordButton}
-              onPress={() => router.push("/(popups)/dietSubmit")}
-            >
-              <Text style={styles.recordButtonText}>Record calories</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInLeft.delay(400).duration(1000).springify()}
-          >
-            <TouchableOpacity
-              style={styles.historyButton}
-              onPress={() => router.push("/(popups)/dietHistory")}
-            >
-              <FontAwesome name="history" size={hp(3.5)} color="white" />
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-
-        <Animated.View
-          entering={FadeInLeft.delay(500).duration(1000).springify()}
-          style={styles.dividerWrapper}
+      <View style={styles.titleWrapper}>
+        <Animated.Text
+          adjustsFontSizeToFit
+          numberOfLines={1}
+          entering={FadeInUp.duration(500).springify()}
+          style={styles.title}
         >
-          <View style={styles.divider} />
-          <Text style={styles.orText}>or</Text>
-          <View style={styles.divider} />
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInLeft.delay(600).duration(1000).springify()}
-          style={styles.changeTargetWrapper}
-        >
-          <TouchableOpacity
-            style={styles.changeTargetButton}
-            onPress={() => router.push("/(popups)/dietTarget")}
-          >
-            <Text style={styles.changeTargetButtonText}>Set a new target!</Text>
-          </TouchableOpacity>
-        </Animated.View>
+          Diet Tracking
+        </Animated.Text>
       </View>
+
+      <View style={styles.subtitleWrapper}>
+        <Animated.Text
+          adjustsFontSizeToFit
+          numberOfLines={1}
+          entering={FadeInUp.delay(200).duration(500).springify()}
+          style={styles.subtitle}
+        >
+          What did you eat today?
+        </Animated.Text>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: hp(0) }} />
+      ) : (
+        <>
+          <CircularProgress 
+            percentage={percentage} 
+            size={hp(25)} 
+            color="#10B981"
+            bgColor="rgb(57, 53, 53)"
+          />
+
+          {remainingCalories !== null && (
+            <View style={{ alignItems: "center" }}>
+              {mode === "deficit" ? (
+                <Text
+                  style={{
+                    fontSize: hp(2.3),
+                    fontWeight: "bold",
+                    color: remainingCalories < 0 ? "red" : "black",
+                    paddingHorizontal: wp(3),
+                    textAlign: "center",
+                  }}
+                >
+                  {remainingCalories < 0
+                    ? `${Math.abs(remainingCalories)} calories exceeded today.`
+                    : `${remainingCalories} remaining calories until target exceeded.`}
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    fontSize: hp(2.3),
+                    fontWeight: "bold",
+                    color: remainingCalories < 0 ? "green" : "black",
+                    paddingHorizontal: wp(3),
+                    textAlign: "center",
+                  }}
+                >
+                  {remainingCalories < 0
+                    ? `${Math.abs(remainingCalories)} extra calories consumed today.`
+                    : `${remainingCalories} remaining calories to hit target.`}
+                </Text>
+              )}
+            </View>
+          )}
+        </>
+      )}
+
+      <Animated.View 
+        entering={FadeInLeft.delay(300).duration(1000).springify()}
+        style={styles.buttonsWrapper}
+      >
+        <TouchableOpacity
+          style={styles.recordButton}
+          onPress={() => router.push("/(popups)/dietSubmit")}
+        >
+          <Text style={styles.recordButtonText}>Record calories</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.historyButton}
+          onPress={() => router.push("/(popups)/dietHistory")}
+        >
+          <FontAwesome name="history" size={hp(3.5)} color="white" />
+        </TouchableOpacity>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInLeft.delay(400).duration(1000).springify()}
+        style={styles.dividerWrapper}
+      >
+        <View style={styles.divider} />
+        <Text style={styles.orText}>or</Text>
+        <View style={styles.divider} />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInLeft.delay(500).duration(1000).springify()}
+        style={styles.changeTargetWrapper}
+      >
+        <TouchableOpacity
+          style={styles.changeTargetButton}
+          onPress={() => router.push("/(popups)/dietTarget")}
+        >
+          <Text style={styles.changeTargetButtonText}>Set a new target!</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   )
 }
@@ -215,9 +205,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
     paddingHorizontal: wp(8),
-  },
-  innerWrapper: {
-    width: wp(85),
   },
   titleWrapper: {
   },
@@ -236,16 +223,15 @@ const styles = StyleSheet.create({
     color: "rgb(146, 136, 136)",
   },
   buttonsWrapper: {
-    width: "100%",
+    flexDirection: "row",
     marginTop: hp(2),
     marginBottom: hp(1),
-    flexDirection: "row",
-    paddingLeft: wp(2),
+    paddingHorizontal: wp(3),
   },
   recordButton: {
+    flex: 4,
     backgroundColor: "#7C3AED",
     paddingVertical: hp(2),
-    paddingHorizontal: wp(7),
     borderTopLeftRadius: 30,
     borderBottomLeftRadius: 30,
     alignItems: "center",
@@ -258,11 +244,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   historyButton: {
+    flex: 1,
     backgroundColor: "#7C3AED",
-    paddingVertical: hp(2.23),
-    paddingHorizontal: wp(6),
     borderTopRightRadius: 30,
     borderBottomRightRadius: 30,
+    justifyContent: "center",
     alignItems: "center",
   },
   dividerWrapper: {

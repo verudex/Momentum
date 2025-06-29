@@ -98,7 +98,7 @@ const DietSubmit = () => {
 				<Animated.View entering={FadeInLeft.delay(300).duration(500).springify()}>
 					<TextInput
 						style={styles.input}
-						placeholder="Name of Food/Meal"
+						placeholder="Name of Food/Meal*"
 						value={foodName}
 						onChangeText={(food) => setFoodName(food)}
 					/>
@@ -107,7 +107,7 @@ const DietSubmit = () => {
 				<Animated.View entering={FadeInLeft.delay(400).duration(500).springify()}>
 					<TextInput
 						style={styles.input}
-						placeholder="Amount/Volume"
+						placeholder="Amount/Volume*"
 						value={foodAmount}
 						onChangeText={(amount) => setFoodAmount(amount)}
 					/>
