@@ -102,13 +102,20 @@ const styles = StyleSheet.create({
   historyButton: {
     width: "100%",
     marginTop: hp(2),
-    backgroundColor: "rgb(76, 72, 159)",
+    backgroundColor: "white",
     paddingVertical: hp(3),
     borderRadius: 30,
     alignItems: "center",
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: hp(0.5) },
+    shadowOpacity: 0.1,
+    shadowRadius: wp(3),
+    elevation: 4,
+    borderWidth: wp(0.3),
+    borderColor: "#E5E7EB",
   },
   historyButtonText: {
-    color: "white",
+    color: '#4F46E5',
     fontWeight: "600",
     fontSize: hp(3),
   },
@@ -127,7 +134,7 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: wp(4.5),
     fontSize: hp(2),
-    color: "#6B7280",
+    color: "#9CA3AF",
   },
   buttonWrapper: {
     alignItems: "center",
@@ -135,10 +142,15 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     width: "100%",
-    backgroundColor: "rgb(79, 70, 229)",
+    backgroundColor: '#4F46E5',
     paddingVertical: hp(3),
     borderRadius: 30,
     alignItems: "center",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: hp(0.7) },
+    shadowOpacity: 0.15,
+    shadowRadius: wp(4),
+    elevation: 6,
   },
   submitButtonText: {
     color: "white",

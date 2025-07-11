@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: "#6B7280",
+    color: "#9CA3AF",
   },
   googleWrapper: {
     alignItems: "center",

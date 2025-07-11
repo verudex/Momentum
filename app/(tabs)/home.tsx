@@ -1,18 +1,385 @@
-import React from "react";
-import { useRouter } from "expo-router";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import React, { useState, useContext, useCallback } from "react";
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, ScrollView } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { useDisableBack } from "../../hooks/useDisableBack";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  orderBy, 
+  limit, 
+  getDocs, 
+  where, 
+  Timestamp,
+  doc,
+  getDoc,
+  setDoc
+} from 'firebase/firestore';
+import { AuthContext } from "../../contexts/AuthContext";
+import { app } from "../../utils/firebaseConfig";
+import { useRouter } from "expo-router";
+import { useDisableBack } from "hooks/useDisableBack";
+import { useFocusEffect } from '@react-navigation/native';
+
+type RecentItem = {
+  id: string;
+  name: string;
+  timestamp: any;
+};
 
 const Home = () => {
   useDisableBack();
-  
-  return (
-    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
-      
-      <Text className="text-5xl text-dark-200 font-bold mb-6 text-center">Welcome to Momentum</Text>
+  const { user } = useContext(AuthContext);
+  const db = getFirestore(app);
+  const router = useRouter();
 
+  // States
+  const [loading, setLoading] = useState(true);
+  const [numWorkoutsThisWeek, setNumWorkoutsThisWeek] = useState(0);
+  const [totalWorkoutTimeThisWeek, setTotalWorkoutTimeThisWeek] = useState({ hours: 0, minutes: 0 });
+  const [workoutStreak, setWorkoutStreak] = useState(0);
+  const [recentWorkouts, setRecentWorkouts] = useState<RecentItem[]>([]);
+
+  const [loadingDiet, setLoadingDiet] = useState(true);
+  const [avgCalories, setAvgCalories] = useState(0);
+  const [dietStreak, setDietStreak] = useState(0);
+  const [mostOffDay, setMostOffDay] = useState<{ date: string; diff: string }>({ date: "", diff: "" });
+  const [targetData, setTargetData] = useState<any>(null);
+  const [goalType, setGoalType] = useState<string>("deficit");
+  const [recentMeals, setRecentMeals] = useState<RecentItem[]>([]);
+
+  // Load data on focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+
+      const fetchData = async () => {
+        setLoading(true);
+        setLoadingDiet(true);
+
+        try {
+          const now = new Date();
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+          startOfWeek.setHours(5, 0, 0, 0);
+
+          // --------------------
+          // LOAD streak doc
+          // --------------------
+          const metaDocRef = doc(db, 'Users', user.uid, 'streak', 'tracking');
+          const metaSnap = await getDoc(metaDocRef);
+
+          let workoutStreakFromDB = 0;
+          let dietStreakFromDB = 0;
+          let lastDietChecked = null;
+          let lastGoalTypeInDB = null;
+          let lastTargetCaloriesInDB = null;
+
+          if (metaSnap.exists()) {
+            const data = metaSnap.data();
+            workoutStreakFromDB = data.workoutStreak ?? 0;
+            dietStreakFromDB = data.dietStreak ?? 0;
+            lastDietChecked = data.lastDietChecked ?? null;
+            lastGoalTypeInDB = data.lastGoalType ?? null;
+            lastTargetCaloriesInDB = data.lastTargetCalories ?? null;
+          }
+
+          setWorkoutStreak(workoutStreakFromDB);
+
+          // --------------------
+          // WORKOUT SUMMARY
+          // --------------------
+          const workoutsQuery = query(
+            collection(db, 'Users', user.uid, 'workouts'),
+            where("timestamp", ">=", Timestamp.fromDate(startOfWeek)),
+            orderBy("timestamp", "desc")
+          );
+          const workoutSnap = await getDocs(workoutsQuery);
+
+          let numThisWeek = 0;
+          let totalMinutes = 0;
+          workoutSnap.forEach(doc => {
+            numThisWeek++;
+            const data = doc.data();
+            if (data.duration) {
+              totalMinutes += parseInt(data.duration.hours || "0") * 60
+                + parseInt(data.duration.minutes || "0");
+            }
+          });
+
+          setNumWorkoutsThisWeek(numThisWeek);
+          setTotalWorkoutTimeThisWeek({
+            hours: Math.floor(totalMinutes / 60),
+            minutes: totalMinutes % 60,
+          });
+
+          const recentWorkoutSnap = await getDocs(
+            query(
+              collection(db, 'Users', user.uid, 'workouts'),
+              orderBy('timestamp', 'desc'),
+              limit(5)
+            )
+          );
+          setRecentWorkouts(recentWorkoutSnap.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name ?? "",
+            timestamp: doc.data().timestamp ?? { seconds: 0 }
+          })));
+
+          // --------------------
+          // DIET TARGET & DATA
+          // --------------------
+          const targetSnap = await getDocs(
+            collection(db, 'Users', user.uid, 'targets')
+          );
+          const fetchedTargetData = targetSnap.docs[0]?.data();
+          setTargetData(fetchedTargetData);
+          const currentGoalType = fetchedTargetData?.goalType ?? "deficit";
+          setGoalType(currentGoalType);
+          const currentTargetCalories = parseInt(fetchedTargetData?.targetCalories ?? "2000");
+
+          const dietQuery = query(
+            collection(db, 'Users', user.uid, 'diet'),
+            where("timestamp", ">=", Timestamp.fromDate(startOfWeek)),
+            orderBy("timestamp", "desc")
+          );
+          const dietSnap = await getDocs(dietQuery);
+
+          const dailyTotals: { [key: string]: number } = {};
+          dietSnap.forEach(doc => {
+            const data = doc.data();
+            const cal = parseFloat(data.calories || "0");
+            const date = new Date(data.timestamp.seconds * 1000);
+            if (date.getHours() < 5) date.setDate(date.getDate() - 1);
+            const key = date.toDateString();
+            dailyTotals[key] = (dailyTotals[key] ?? 0) + cal;
+          });
+
+          // --------------------
+          // AVG + MOST OFF DAY WITH +/- SIGN
+          // --------------------
+          const days = Object.keys(dailyTotals);
+          const avg = days.length > 0 ? 
+            days.reduce((sum, day) => sum + dailyTotals[day], 0) / days.length : 0;
+          setAvgCalories(Math.round(avg));
+
+          let extremeDay = "";
+          let extremeDiff = currentGoalType === "deficit" ? -Infinity : Infinity;
+          days.forEach(day => {
+            const diff = dailyTotals[day] - currentTargetCalories;
+            if (currentGoalType === "deficit") {
+              if (diff > extremeDiff) {
+                extremeDiff = diff;
+                extremeDay = day;
+              }
+            } else {
+              if (diff < extremeDiff) {
+                extremeDiff = diff;
+                extremeDay = day;
+              }
+            }
+          });
+
+          const signedDiff = extremeDiff > 0 ? `+${extremeDiff}` : `${extremeDiff}`;
+          setMostOffDay({ date: extremeDay, diff: signedDiff });
+
+          // --------------------
+          // DIET STREAK LOGIC
+          // --------------------
+          const today = new Date();
+          today.setHours(5, 0, 0, 0);
+          const todayKey = today.toDateString();
+
+          let newDietStreak = dietStreakFromDB;
+
+          // If target changed, reset streak
+          if (currentGoalType !== lastGoalTypeInDB || currentTargetCalories !== lastTargetCaloriesInDB) {
+            newDietStreak = 0;
+          }
+          // Otherwise only if not checked today, verify yesterday met
+          else if (lastDietChecked !== todayKey) {
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayTotal = dailyTotals[yesterday.toDateString()] ?? 0;
+
+            const met = currentGoalType === "deficit"
+              ? yesterdayTotal <= currentTargetCalories
+              : yesterdayTotal >= currentTargetCalories;
+            newDietStreak = met ? dietStreakFromDB + 1 : 0;
+          }
+
+          // Always update Firestore with latest tracking
+          await setDoc(metaDocRef, {
+            workoutStreak: workoutStreakFromDB,
+            dietStreak: newDietStreak,
+            lastDietChecked: todayKey,
+            lastGoalType: currentGoalType,
+            lastTargetCalories: currentTargetCalories
+          }, { merge: true });
+
+          setDietStreak(newDietStreak);
+
+          // --------------------
+          // RECENT MEALS
+          // --------------------
+          const recentMealsSnap = await getDocs(
+            query(
+              collection(db, 'Users', user.uid, 'diet'),
+              orderBy('timestamp', 'desc'),
+              limit(5)
+            )
+          );
+          setRecentMeals(recentMealsSnap.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name ?? "",
+            timestamp: doc.data().timestamp ?? { seconds: 0 }
+          })));
+
+          setLoading(false);
+          setLoadingDiet(false);
+
+        } catch (err) {
+          console.error("Failed to fetch/update data:", err);
+          setLoading(false);
+          setLoadingDiet(false);
+        }
+      };
+
+      fetchData();
+    }, [user])
+  );
+
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Animated.Text entering={FadeInDown.duration(500).springify()} style={styles.title}>
+          Welcome Back 👋
+        </Animated.Text>
+
+        {/* Workout Summary */}
+        <Animated.View entering={FadeInUp.duration(500).springify().delay(200)} style={styles.card}>
+          <Text style={styles.cardTitle}>💪 Workout Summary</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginVertical: hp(4) }} />
+          ) : (
+            <>
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{numWorkoutsThisWeek}</Text>
+                  <Text style={styles.statLabel}>Workouts This Week</Text>
+                </View>
+
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{totalWorkoutTimeThisWeek.hours}h {totalWorkoutTimeThisWeek.minutes}m</Text>
+                  <Text style={styles.statLabel}>Time Spent Grinding</Text>
+                </View>
+
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{workoutStreak}</Text>
+                  <Text style={styles.statLabel}>Day Streak</Text>
+                </View>
+              </View>
+
+              <View style={styles.historyContainer}>
+                <Text style={styles.historyTitle}>Workout History:</Text>
+
+                {recentWorkouts.length === 0 ? (
+                  <>
+                    <Text style={styles.emptyHistory}>Nothing Here!</Text>
+
+                    <TouchableOpacity onPress={() => router.push("/(popups)/workoutSubmit")}>
+                      <Text style={styles.viewMoreText}>Start now!</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    {recentWorkouts.map(workout => (
+                      <View key={workout.id} style={styles.historyRow}>
+                        <Text style={styles.historyWorkout} numberOfLines={1} ellipsizeMode="tail">
+                          {workout.name}
+                        </Text>
+
+                        <Text style={styles.historyDate}>
+                          {`${new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-GB', { weekday: 'short' })} • ${new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`}
+                        </Text>
+                      </View>
+                    ))}
+                    <TouchableOpacity onPress={() => router.push("/(popups)/workoutHistory")}>
+                      <Text style={styles.viewMoreText}>View more...</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </>
+          )}
+        </Animated.View>
+
+        {/* Diet Summary */}
+        <Animated.View entering={FadeInUp.duration(500).springify().delay(300)} style={styles.card}>
+          <Text style={styles.cardTitle}>🍎 Diet Summary</Text>
+          {loadingDiet ? (
+            <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginVertical: hp(4) }} />
+          ) : (
+            <>
+              <View style={[
+                styles.statsContainer,
+                !targetData && { justifyContent: 'space-evenly' } // if no target, center nicely
+              ]}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{avgCalories}</Text>
+                  <Text style={styles.statLabel}>Avg kcal/day this week</Text>
+                </View>
+
+                {targetData && recentMeals.length > 0 && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{mostOffDay.diff}</Text>
+                    <Text style={styles.statLabel}>
+                      {goalType === "deficit" ? "Greatest kcal Deficit" : "Greatest kcal Surplus"}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{dietStreak}</Text>
+                  <Text style={styles.statLabel}>Day Streak</Text>
+                </View>
+              </View>
+
+              <View style={styles.historyContainer}>
+                <Text style={styles.historyTitle}>Diet History:</Text>
+
+                {recentMeals.length === 0 ? (
+                  <>
+                    <Text style={styles.emptyHistory}>Nothing Here!</Text>
+                    <TouchableOpacity onPress={() => router.push("/(popups)/dietSubmit")}>
+                      <Text style={styles.viewMoreText}>Start now!</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    {recentMeals.map(meal => (
+                      <View key={meal.id} style={styles.historyRow}>
+                        <Text style={styles.historyWorkout} numberOfLines={1} ellipsizeMode="tail">
+                          {meal.name}
+                        </Text>
+
+                        <Text style={styles.historyDate}>
+                          {`${new Date(meal.timestamp.seconds * 1000).toLocaleDateString('en-GB', { weekday: 'short' })} • ${new Date(meal.timestamp.seconds * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`}
+                        </Text>
+                      </View>
+                    ))}
+                    <TouchableOpacity onPress={() => router.push("/(popups)/dietHistory")}>
+                      <Text style={styles.viewMoreText}>View more...</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </>
+          )}
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -22,122 +389,107 @@ export default Home;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    paddingHorizontal: 24,
+    backgroundColor: '#F9FAFB',
   },
-  innerWrapper: {
-    width: "100%",
-  },
-  logo: {
-    height: 128,
-    width: 128,
-    alignSelf: "center",
+  scrollContainer: {
+    padding: wp(5),
   },
   title: {
-    textAlign: "center",
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-    marginTop: 16,
+    fontSize: wp(7),
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: hp(3),
+    textAlign: 'center',
   },
-  form: {
-    marginTop: 24,
-    gap: 20,
-  },
-  inputWrapper: {
-    position: "relative",
-  },
-  input: {
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    backgroundColor: "white",
-    fontSize: 16,
-    color: "#111827",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 12,
-    top: 27,
-    transform: [{ translateY: -10 }],
-  },
-  error: {
-    color: "#ef4444",
-    fontSize: 14,
-    marginTop: 4,
-  },
-  registerButton: {
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: wp(5),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(5),
+    marginBottom: hp(2.5),
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: hp(0.5) },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: wp(3),
+    elevation: 4,
   },
-  registerButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
+  cardTitle: {
+    fontSize: wp(5.2),
+    fontWeight: '600',
+    color: '#4F46E5',
+    alignSelf: 'center',
   },
-  disabled: {
-    opacity: 0.5,
+  cardContent: {
+    gap: hp(1),
   },
-  loginRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    paddingTop: 12,
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: hp(1.5),
   },
-  loginText: {
-    fontSize: 14,
-    color: "#4B5563",
+  statItem: {
+    width: "33%",
+    alignItems: 'center',
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
   },
-  loginLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4F46E5",
+  statValue: {
+    fontSize: wp(5),
+    fontWeight: 'bold',
+    color: '#4F46E5',
   },
-  dividerWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 20,
+  statLabel: {
+    fontSize: wp(3),
+    color: '#6B7280',
+    marginTop: hp(0.5),
+    textAlign: 'center',
   },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#D1D5DB",
+  historyContainer: {
+    paddingTop: hp(1.2),
+    borderTopWidth: wp(0.3),
+    borderTopColor: '#E5E7EB',
   },
-  orText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: "#6B7280",
+  historyTitle: {
+    fontSize: wp(4),
+    marginBottom: hp(1),
+    fontWeight: 'bold',
+    color: '#4B5563', // soft grey text
+    backgroundColor: '#E5E7EB', // light grey background
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(0.3),
+    borderRadius: 9999, // fully rounded
+    alignSelf: "center",
   },
-  googleWrapper: {
-    alignItems: "center",
-    paddingTop: 8,
+  historyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: hp(0.7),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
-  googleButton: {
-    width: "100%",
-    backgroundColor: "#4F46E5",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  historyWorkout: {
+    maxWidth: "65%",
+    fontSize: wp(3.7),
+    color: '#374151',
   },
-  googleButtonText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
+  historyDate: {
+    fontSize: wp(3.7),
+    color: '#6B7280',
+  },
+  emptyHistory: {
+    fontSize: wp(4),
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  viewMoreText: {
+    marginTop: hp(1.5),
+    fontSize: wp(3.7),
+    color: '#7C3AED',
+    fontWeight: '600',
+    alignSelf: 'center',
+  },
+  itemText: {
+    fontSize: wp(4.2),
+    color: '#374151',
   },
 });

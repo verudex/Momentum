@@ -14,7 +14,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, Easing } from "react-native-reanimated";
 import { AuthContext } from "../../contexts/AuthContext";
 import WorkoutOptions from "../../utils/workoutOptions";
-import { getFirestore, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
 
 const WorkoutSubmit = () => {
@@ -37,35 +37,73 @@ const WorkoutSubmit = () => {
   const handleSubmit = async () => {
     console.log("Submit button clicked");
     setIsLoading(true);
+
     if (user == null) {
       Alert.alert("Error", "User not logged in.");
       setIsLoading(false);
       return;
     }
     if (!WorkoutOptions.includes(workoutName)) {
-      Alert.alert("Invalid Input", "Invalid Workout Name!")
+      Alert.alert("Invalid Input", "Invalid Workout Name!");
       setIsLoading(false);
       return;
     }
+
+    const now = new Date();
+    if (now.getHours() < 5) now.setDate(now.getDate() - 1);
+    const todayKey = now.toDateString();
+
+    const metaRef = doc(db, "Users", user.uid, "streak", "tracking");
+    const metaSnap = await getDoc(metaRef);
+
+    let newStreak = 1;
+
+    if (metaSnap.exists()) {
+      const data = metaSnap.data();
+      const lastWorkoutDate = data.lastWorkoutDate?.seconds 
+        ? new Date(data.lastWorkoutDate.seconds * 1000).toDateString() 
+        : null;
+      const currentStreak = data.workoutStreak ?? 0;
+
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (lastWorkoutDate === todayKey) {
+        newStreak = currentStreak; // already logged today
+      } else if (lastWorkoutDate === yesterday.toDateString()) {
+        newStreak = currentStreak + 1; // continued streak
+      }
+    }
+
+    // Add workout record
     await addDoc(
-      collection(db, "Users", user.uid, "workouts"), // nested path
+      collection(db, "Users", user.uid, "workouts"),
       {
         name: workoutName,
-        duration: duration,
-        sets: sets,
-        reps: reps,
-        weight: weight,
+        duration,
+        sets,
+        reps,
+        weight,
         timestamp: serverTimestamp(),
       }
     );
-    console.log("Successfully written!");
+
+    // Update streak object
+    await setDoc(metaRef, {
+      workoutStreak: newStreak,
+      lastWorkoutDate: serverTimestamp(),
+    }, { merge: true });
+
+    console.log("Workout recorded & streak updated!");
+
     setWorkoutName("");
     setDuration({ hours: "", minutes: "", seconds: "" });
     setReps("");
     setSets("");
     setWeight("");
     setIsLoading(false);
-    Alert.alert("Workout Recorded!", "Well done!")
+
+    Alert.alert("Workout Recorded!", "Well done!");
   };
 
   const handleWorkoutInput = (text: string) => {

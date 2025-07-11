@@ -107,7 +107,9 @@ const DietTracking = () => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: hp(0) }} />
+        <View style={{ paddingVertical: hp(15.5) }}>
+          <ActivityIndicator size="large" color="rgb(146, 136, 136)" />
+        </View>
       ) : (
         <>
           <CircularProgress 
@@ -161,7 +163,7 @@ const DietTracking = () => {
           style={styles.recordButton}
           onPress={() => router.push("/(popups)/dietSubmit")}
         >
-          <Text style={styles.recordButtonText}>Record calories</Text>
+          <Text style={styles.recordButtonText}>Check/Record calories</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -226,30 +228,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginTop: hp(2),
     marginBottom: hp(1),
-    paddingHorizontal: wp(3),
   },
   recordButton: {
     flex: 4,
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#34D399",
     paddingVertical: hp(2),
     borderTopLeftRadius: 30,
     borderBottomLeftRadius: 30,
     alignItems: "center",
     borderRightWidth: 1,
     borderRightColor: "rgb(57, 53, 53)",
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: hp(0.5) },
+    shadowOpacity: 1,
+    shadowRadius: wp(3),
+    elevation: 4,
   },
   recordButtonText: {
     color: "white",
-    fontSize: hp(3),
+    fontSize: hp(2.5),
     fontWeight: "bold",
   },
   historyButton: {
     flex: 1,
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#34D399",
     borderTopRightRadius: 30,
     borderBottomRightRadius: 30,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: hp(0.5) },
+    shadowOpacity: 1,
+    shadowRadius: wp(3),
+    elevation: 4,
   },
   dividerWrapper: {
     flexDirection: "row",
@@ -265,7 +276,7 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: wp(4.5),
     fontSize: hp(2),
-    color: "#6B7280",
+    color: "#9CA3AF",
   },
   changeTargetWrapper: {
     alignItems: "center",
@@ -277,6 +288,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(15),
     borderRadius: 30,
     alignItems: "center",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: hp(0.7) },
+    shadowOpacity: 0.15,
+    shadowRadius: wp(4),
+    elevation: 6,
   },
   changeTargetButtonText: {
     color: "white",

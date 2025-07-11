@@ -287,6 +287,11 @@ const styles = StyleSheet.create({
     paddingVertical: hp(2),
     borderRadius: wp(3),
     gap: wp(2),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: hp(0.7) },
+    shadowOpacity: 0.15,
+    shadowRadius: wp(4),
+    elevation: 6,
   },
   logoutText: {
     color: 'white',

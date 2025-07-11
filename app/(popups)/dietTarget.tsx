@@ -7,7 +7,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-nat
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
 
-const DietSubmit = () => {
+const DietTarget = () => {
 	const { user } = useContext(AuthContext);
 
   const [target, setTarget] = useState("");
@@ -136,7 +136,7 @@ const DietSubmit = () => {
 	)
 }
 
-export default DietSubmit;
+export default DietTarget;
 
 const styles = StyleSheet.create({
 	container: {

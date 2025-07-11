@@ -13,13 +13,14 @@ const DietSubmit = () => {
 
 	const [foodName, setFoodName] = useState("");
 	const [foodAmount, setFoodAmount] = useState("");
+	const [requestType, setRequestType] = useState("check");
 	const [isLoading, setIsLoading] = useState(false);
 
 	const isInvalid = !foodName || !foodAmount;
 
 	const db = getFirestore(app);
 
-	const recordCalories = async () => {
+	const handleRequest = async () => {
 		console.log("Submit button clicked");
 		setIsLoading(true);
 		if (user == null) {
@@ -32,30 +33,36 @@ const DietSubmit = () => {
 			const API_BASE_URL = "https://momentum-mbw7.onrender.com";
 
 			const response = await fetch(`${API_BASE_URL}/api/calculate`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ input: foodAmount + " " + foodName }),
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ input: foodAmount + " " + foodName }),
 			});
 
 			const data = await response.json();
 			if (data.result) {
-				const cleanResult = String(data.result).replace(/\s+/g, ' ').trim();
-				console.log("Calories estimated:", cleanResult);
+			const cleanResult = String(data.result).replace(/\s+/g, ' ').trim();
+			console.log("Calories estimated:", cleanResult);
+
+			if (requestType === 'check') {
+				Alert.alert("Estimated calories: ", `${cleanResult} calories`)
+				console.log("Successfully checked!")
+			} else {
 				Alert.alert("Estimated calories consumed: ", `${cleanResult} calories`)
 				await addDoc(
-					collection(db, "Users", user.uid, "diet"), // nested path
-					{
-						name: foodName,
-						amount: foodAmount,
-						calories: cleanResult,
-						timestamp: serverTimestamp(),
-					}
+				collection(db, "Users", user.uid, "diet"),
+				{
+					name: foodName,
+					amount: foodAmount,
+					calories: cleanResult,
+					timestamp: serverTimestamp(),
+				}
 				);
-				console.log("Successfully recorded!")
+				console.log("Successfully recorded!");
+			}
 			} else {
-				console.log("No result returned");
+			console.log("No result returned");
 			}
 		} catch (error) {
 			console.error("Error calling backend:", error);
@@ -114,16 +121,57 @@ const DietSubmit = () => {
 				</Animated.View>
 			</View>
 
-			<Animated.View entering={FadeInLeft.delay(500).duration(500).springify()}>
+			<Animated.View 
+				entering={FadeInLeft.delay(500).duration(500).springify()}
+				style={styles.toggleWrapper}
+			>
 				<TouchableOpacity
-					disabled={isInvalid || isLoading}
-					onPress={() => recordCalories()}
-					style={[styles.submitButton, (isInvalid || isLoading) && styles.disabled]}
+				style={[
+					styles.checkButton,
+					requestType === 'check' && { backgroundColor: '#10B981' }
+				]}
+				onPress={() => setRequestType('check')}
+				>
+				<Text style={[
+					styles.toggleText,
+					requestType === 'check' && styles.activeText
+				]}>
+					Check
+				</Text>
+				</TouchableOpacity>
+
+				<TouchableOpacity
+				style={[
+					styles.recordButton,
+					requestType === 'record' && { backgroundColor: '#7C3AED' }
+				]}
+				onPress={() => setRequestType('record')}
+				>
+				<Text style={[
+					styles.toggleText,
+					requestType === 'record' && styles.activeText
+				]}>
+					Record
+				</Text>
+				</TouchableOpacity>
+			</Animated.View>
+
+			<Animated.View entering={FadeInLeft.delay(600).duration(500).springify()}>
+				<TouchableOpacity
+				disabled={isInvalid || isLoading}
+				onPress={() => handleRequest()}
+				style={[
+					styles.submitButton,
+					requestType === 'check' ? { backgroundColor: '#10B981' } : { backgroundColor: '#7C3AED' },
+					(isInvalid || isLoading) && styles.disabled
+				]}
 				>
 					{isLoading ? (
 						<ActivityIndicator color="white" />
 					) : (
-						<Text style={styles.submitButtonText}>Record</Text>
+						<Text style={styles.submitButtonText}>
+							{requestType === 'check' ? 'Check' : 'Record'}
+						</Text>
 					)}
 				</TouchableOpacity>
 			</Animated.View>
@@ -175,6 +223,35 @@ const styles = StyleSheet.create({
 		borderColor: "#ccc",
 		borderWidth: 1,
 		fontSize: hp(2),
+	},
+	toggleWrapper: {
+		flexDirection: 'row',
+		marginBottom: hp(2.5),
+		paddingHorizontal: wp(3),
+	},
+	checkButton: {
+		flex: 1,
+		paddingVertical: hp(1.5),
+		borderTopLeftRadius: 30,
+		borderBottomLeftRadius: 30,
+		backgroundColor: '#E5E7EB',
+		alignItems: 'center',
+	},
+	recordButton: {
+		flex: 1,
+		paddingVertical: hp(1.5),
+		borderTopRightRadius: 30,
+		borderBottomRightRadius: 30,
+		backgroundColor: '#E5E7EB',
+		alignItems: 'center',
+	},
+	toggleText: {
+		fontSize: hp(2),
+		fontWeight: 'bold',
+		color: '#6B7280',
+	},
+	activeText: {
+		color: 'white',
 	},
 	submitButton: {
 		backgroundColor: "#7C3AED",
