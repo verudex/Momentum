@@ -16,18 +16,16 @@ import { AuthContext } from "../../contexts/AuthContext";
 import WorkoutOptions from "../../utils/workoutOptions";
 import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
+import { Dropdown } from 'react-native-element-dropdown';
 
 const WorkoutSubmit = () => {
   const { user } = useContext(AuthContext);
 
   const [workoutName, setWorkoutName] = useState("");
-  const [filteredWorkouts, setFilteredWorkouts] = useState(WorkoutOptions);
-  const [inputLayout, setInputLayout] = useState({ y: 0, height: 0 });
   const [duration, setDuration] = useState({ hours: "", minutes: "", seconds: "" });
   const [sets, setSets] = useState("");
   const [reps, setReps] = useState("");
   const [weight, setWeight] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const isInvalid = !workoutName;
@@ -106,15 +104,9 @@ const WorkoutSubmit = () => {
     Alert.alert("Workout Recorded!", "Well done!");
   };
 
-  const handleWorkoutInput = (text: string) => {
-    setWorkoutName(text);
-    setShowDropdown(true);
-    setFilteredWorkouts(WorkoutOptions.filter(item => item.toLowerCase().includes(text.toLowerCase())));
-  };
-
   const isNumber = (text: string) => /^\d+$/.test(text);
   const isDecimal = (text: string) => /^\d+(\.\d{0,1})?$/.test(text);
-  
+
   return (
       <KeyboardAwareScrollView
         style={{ backgroundColor: "white" }}
@@ -137,42 +129,44 @@ const WorkoutSubmit = () => {
         </Animated.Text>
 
         <Animated.View
-          entering={FadeInLeft.delay(300).duration(500).springify()} 
+          entering={FadeInLeft.delay(300).duration(500).springify()}
           style={styles.workoutNameInput}
-          onLayout={(event) => {
-            const { y, height } = event.nativeEvent.layout;
-            setInputLayout({ y, height });
-          }}
         >
-          <TextInput
+          <Dropdown
             style={styles.input}
+            containerStyle={{
+              paddingVertical: hp(0.5),
+              paddingHorizontal: wp(1),
+              borderRadius: 30,
+              elevation: 2,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1.41
+            }}
+            placeholderStyle={{ fontSize: hp(2.5), color: "rgba(109, 104, 104, 1)" }}
+            selectedTextStyle={{ fontSize: hp(2.5) }}
+            inputSearchStyle={{
+              height: hp(5),
+              fontSize: hp(2),
+              borderRadius: 30,
+            }}
+            itemTextStyle={{
+              fontSize: hp(2)
+            }}
+            data={WorkoutOptions.map(item => ({ label: item, value: item }))}
+            search
+            maxHeight={hp(25)}
+            labelField="label"
+            valueField="value"
             placeholder="Workout Name*"
+            searchPlaceholder="Search workouts..."
             value={workoutName}
-            onChangeText={handleWorkoutInput}
+            onChange={item => {
+              setWorkoutName(item.value);
+            }}
           />
         </Animated.View>
-
-        {showDropdown && workoutName.length > 0 && filteredWorkouts.length > 0 && (
-          <Animated.View 
-            entering={FadeInUp.duration(100).easing(Easing.out(Easing.ease))}
-            style={styles.dropdownWrapper}
-          >
-            <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
-              {filteredWorkouts.map((item) => (
-                <TouchableOpacity
-                  key={item}
-                  onPress={() => {
-                    setWorkoutName(item);
-                    setFilteredWorkouts([]);
-                    setShowDropdown(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItem}>{item}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        )}
 
         <View style={styles.durationRow}>
           <Animated.View 
@@ -305,37 +299,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: hp(3),
     fontSize: hp(2.5),
-  },
-  dropdownContainer: {
-    zIndex: 10,
-  },
-  dropdownWrapper: {
-    position: 'absolute',
-    justifyContent: "center",
-    width: wp(86),
-    top: "25%",
-    left: wp(7),
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
-    borderWidth: 1,
-    borderRadius: 6,
-    maxHeight: hp(20),
-    zIndex: 100,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  dropdownScroll: {
-    maxHeight: hp(20),
-  },
-  dropdownItem: {
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(2),
-    fontSize: hp(3),
-    borderBottomColor: "#eee",
-    borderBottomWidth: 1,
   },
   workoutNameInput: {
     marginTop: hp(2),

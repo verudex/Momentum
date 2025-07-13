@@ -15,7 +15,6 @@ interface AuthContextType {
   setSignInMethod: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-// Provide default values
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   setUser: () => null,
@@ -35,22 +34,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signInMethod, setSignInMethod] = useState<string | null>(null);
 
   useEffect(() => {
-    const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (initializing) setInitializing(false);
+    const authInstance = getAuth(app);
+    const unsubscribe = onAuthStateChanged(authInstance, (firebaseUser) => {
+      setUser(firebaseUser);
+      setInitializing(false);
     });
-
     return unsubscribe;
-  }, [initializing]);
+  }, []);
 
-  const value: AuthContextType = {
-    user,
-    setUser,
-    initializing,
-    signInMethod,
-    setSignInMethod,
-  };
+  useEffect(() => {
+    // Only run navigation AFTER initializing is done
+    if (!initializing) {
+      if (user) {
+        router.replace("/(tabs)/home");
+      }
+    }
+  }, [initializing, user]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  if (initializing) return null;
+
+  return (
+    <AuthContext.Provider value={{ user, setUser, initializing, signInMethod, setSignInMethod }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

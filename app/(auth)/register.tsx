@@ -10,14 +10,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  StatusBar
 } from "react-native";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { googleSignIn, emailRegister } from "../../utils/signIn_Out";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Register = () => {
+  const insets = useSafeAreaInsets();
   const { user, setUser } = useContext(AuthContext);
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -72,7 +75,8 @@ const Register = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingTop: -insets.top }]}>
+      <StatusBar barStyle="dark-content" />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
@@ -225,7 +229,7 @@ const Register = () => {
           </View>
         )}
       </KeyboardAwareScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

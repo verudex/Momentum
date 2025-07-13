@@ -10,14 +10,70 @@ import {
   signOut as firebaseSignOut,
   User
 } from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  arrayUnion,
+  arrayRemove
+} from "firebase/firestore";
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 import { app } from "./firebaseConfig";
 import { router } from "expo-router";
 import { createUserProfile } from "./userFirestore";
 
-// Get modular Firebase Auth instance
+// Firebase instances
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Handle Firebase Auth errors
+// ==============================
+// 🔥 PUSH TOKEN HELPERS
+// ==============================
+const registerPushTokenForUser = async (uid: string) => {
+  console.log("Starting registration of push token...");
+  if (!Device.isDevice) return;
+  console.log("Awaiting permissions for push token...");
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== 'granted') return;
+
+  const tokenData = await Notifications.getExpoPushTokenAsync();
+  console.log('Push token registered:', tokenData.data);
+
+  await setDoc(doc(db, 'Users', uid), {
+    tokens: arrayUnion(tokenData.data)
+  }, { merge: true });
+};
+
+const removePushTokenForUser = async (uid: string) => {
+  if (!uid) return;
+  if (!Device.isDevice) return;
+
+  try {
+    console.log("Getting push token...");
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    console.log('Retrieved push token:', tokenData.data);
+
+    await setDoc(doc(db, 'Users', uid), {
+      tokens: arrayRemove(tokenData.data)
+    }, { merge: true });
+
+  } catch (error) {
+    console.error("Failed to remove push token from Firestore:", error);
+  }
+};
+
+
+
+
+// ==============================
+// 🔥 ERROR HANDLER
+// ==============================
 const handleAuthError = (error: any) => {
   console.error("Auth error:", error);
   switch (error.code) {
@@ -44,8 +100,9 @@ const handleAuthError = (error: any) => {
   }
 };
 
-
-// Google Sign-In
+// ==============================
+// 🔥 GOOGLE SIGN IN
+// ==============================
 export const googleSignIn = async (setUser: (user: User) => void) => {
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -59,14 +116,12 @@ export const googleSignIn = async (setUser: (user: User) => void) => {
     const userCredential = await signInWithCredential(auth, googleCredential);
 
     setUser(userCredential.user);
-    if (!userCredential.user.email) {
-      throw new Error("Google account did not return an email.");
-    }
-
     await createUserProfile({
       uid: userCredential.user.uid,
-      email: userCredential.user.email,
+      email: userCredential.user.email!,
     });
+
+    await registerPushTokenForUser(userCredential.user.uid);
 
     return {
       success: true,
@@ -78,15 +133,13 @@ export const googleSignIn = async (setUser: (user: User) => void) => {
       return { success: false, cancelled: true };
     }
     handleAuthError(error);
-    return {
-      success: false,
-      error,
-    };
+    return { success: false, error };
   }
 };
 
-
-// Email Sign-In
+// ==============================
+// 🔥 EMAIL SIGN IN
+// ==============================
 export const signIn = async (
   email: string,
   password: string,
@@ -96,9 +149,7 @@ export const signIn = async (
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Refresh user info to get latest emailVerified value
     await user.reload();
-
     if (!user.emailVerified) {
       Alert.alert(
         "Email Not Verified",
@@ -111,15 +162,12 @@ export const signIn = async (
           { text: "OK", style: "cancel" },
         ]
       );
-      return; 
+      return;
     }
 
     setUser(user);
-
-    await createUserProfile({
-      uid: user.uid,
-      email: user.email!,
-    });
+    await createUserProfile({ uid: user.uid, email: user.email! });
+    await registerPushTokenForUser(user.uid);
 
     router.replace("/(tabs)/home");
 
@@ -128,8 +176,36 @@ export const signIn = async (
   }
 };
 
+// ==============================
+// 🔥 EMAIL REGISTER
+// ==============================
+export const emailRegister = async (
+  email: string,
+  password: string,
+  setUser: (user: User) => void
+) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    setUser(userCredential.user);
 
-// Email Verification
+    await createUserProfile({
+      uid: userCredential.user.uid,
+      email: userCredential.user.email!,
+    });
+
+    await sendVerificationLink(userCredential.user);
+    Alert.alert("Please verify your email and log in again!");
+
+    await registerPushTokenForUser(userCredential.user.uid);
+
+  } catch (error) {
+    handleAuthError(error);
+  }
+};
+
+// ==============================
+// 🔥 SEND VERIFICATION
+// ==============================
 const sendVerificationLink = async (user: User) => {
   try {
     if (!user.emailVerified) {
@@ -144,37 +220,22 @@ const sendVerificationLink = async (user: User) => {
   }
 };
 
-// Email Register
-export const emailRegister = async (
-  email: string,
-  password: string,
-  setUser: (user: User) => void
-) => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    setUser(userCredential.user);
-    if (!userCredential.user.email) {
-      throw new Error("Google account did not return an email.");
-    }
-
-    await createUserProfile({
-      uid: userCredential.user.uid,
-      email: userCredential.user.email,
-    });
-
-    await sendVerificationLink(userCredential.user); // Sends verification link
-
-    Alert.alert("Please verify your email and log in again!")
-  } catch (error) {
-    handleAuthError(error);
-  }
-};
-
-// Sign-Out (Google or Email)
+// ==============================
+// 🔥 SIGN OUT
+// ==============================
 export const signOut = async (setUser: (user: null) => void) => {
   try {
+    const user = auth.currentUser;
+
+    if (user) {
+      // Only try remove token if still logged in
+      await removePushTokenForUser(user.uid);
+    }
+
+    // Then sign out from auth & Google
     await firebaseSignOut(auth);
-    await GoogleSignin.signOut(); // optional: only if user signed in with Google
+    await GoogleSignin.signOut();
+
     setUser(null);
     Alert.alert("Success", "You have been logged out");
   } catch (error) {

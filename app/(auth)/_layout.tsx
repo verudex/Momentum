@@ -8,17 +8,26 @@ export default function AuthLayout() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={{ 
-      flex: 1,
-      paddingTop: -insets.top,
-      backgroundColor: 'white'
-    }}>
-      <AuthProvider>
-        <KeyboardProvider>
-          <StatusBar barStyle="dark-content" />
-          <Stack screenOptions={{ headerShown: false }} />
-        </KeyboardProvider>
-      </AuthProvider>
-    </SafeAreaView>
+    <AuthProvider>
+      <KeyboardProvider>
+        <Stack>
+          <Stack.Screen name="startup" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="login"
+            options={{
+              headerTitle: '',
+              headerShadowVisible: false,
+            }}
+          />
+          <Stack.Screen 
+            name="register" 
+            options={{ 
+              headerTitle: '',
+              headerShadowVisible: false,
+            }} 
+          />
+        </Stack>
+      </KeyboardProvider>
+    </AuthProvider>
   );
 }

@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "12153493344-d2nkpusr6bpf95ba3a4b0m91dm77e31o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.JerkWeight.Momentum",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "12153493344-p0sllj52lk1k2kfq1e2lsu0ei9dmj3dc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.JerkWeight.Momentum",
+            "certificate_hash": "b810904e19353e07691a2f45cd1c3bba90d99f6c"
+          }
+        },
+        {
           "client_id": "12153493344-qbhdurglltd38a6boc6jke2vpnmgtmn0.apps.googleusercontent.com",
           "client_type": 3
         }
