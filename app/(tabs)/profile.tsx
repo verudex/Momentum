@@ -121,20 +121,20 @@ const Profile = () => {
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
             </TouchableOpacity>
           </Animated.View>
-{/* 
+
           <Animated.View 
             entering={FadeInUp.duration(500).springify().delay(300)}
             style={styles.menuButtonContainer}
           >
-            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("help")}>
+            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("friendsPage")}>
               <Ionicons name="help-circle-sharp" size={24} color="#4F46E5" />
-              <Text style={styles.menuText}>Help Center</Text>
+              <Text style={styles.menuText}>Friends List</Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
             </TouchableOpacity>
-          </Animated.View> */}
+          </Animated.View>
 
           <Animated.View 
-            entering={FadeInUp.duration(500).springify().delay(300)}
+            entering={FadeInUp.duration(500).springify().delay(400)}
             style={styles.menuButtonContainer}
           >
             <TouchableOpacity style={styles.menuButton} onPress={() => router.push("settings")}>
@@ -147,7 +147,7 @@ const Profile = () => {
 
         {/* Logout Button */}
         <Animated.View 
-          entering={FadeInUp.duration(500).springify().delay(400)}
+          entering={FadeInUp.duration(500).springify().delay(500)}
           style={styles.logoutContainer}
         >
           <TouchableOpacity

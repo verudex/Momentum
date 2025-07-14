@@ -8,11 +8,13 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 import { app } from "./firebaseConfig";
+import { User } from "firebase/auth";
+
 
 // Init Firestore
-const db = getFirestore(app);
+export const db = getFirestore(app);
 
-// ✅ Utility for testing data insert
+// Utility for testing data insert
 export const dataTest = async () => {
   console.log("running test");
 
@@ -27,27 +29,36 @@ export const dataTest = async () => {
   }
 };
 
-// ✅ Create a user document
-export const createUserProfile = async (user: { uid: string; email: string }) => {
+// Create a user document
+export const createUserProfile = async (user: User) => {
   const userRef = doc(db, "userData", user.uid);
-  await setDoc(userRef, {
+
+  const userData = {
     uid: user.uid,
-    email: user.email,
+    email: user.email || "",
+    username: user.displayName || "",
+    photoURL: user.photoURL || "",
     createdAt: serverTimestamp(),
     lastLogin: serverTimestamp(),
-  });
+    friends: [],
+    sentRequests: [],
+    receivedRequests: [],
+  };
+
+
+  await setDoc(userRef, userData, { merge: true });
 
   return userRef;
 };
 
-// ✅ Get user document
+// Get user document
 export const getUserData = async (userId: string) => {
   const userRef = doc(db, "userData", userId);
   const snapshot = await getDoc(userRef);
   return snapshot.exists() ? snapshot.data() : null;
 };
 
-// ✅ Add/update a workout
+// Add/update a workout
 export const addWorkoutData = async (
   userId: string,
   workoutName: string,
@@ -73,3 +84,7 @@ export const addWorkoutData = async (
     await setDoc(workoutRef, data);
   }
 };
+
+
+
+

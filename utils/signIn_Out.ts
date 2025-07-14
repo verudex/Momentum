@@ -8,7 +8,8 @@ import {
   GoogleAuthProvider,
   sendEmailVerification,
   signOut as firebaseSignOut,
-  User
+  User,
+  updateProfile,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -116,10 +117,6 @@ export const googleSignIn = async (setUser: (user: User) => void) => {
     const userCredential = await signInWithCredential(auth, googleCredential);
 
     setUser(userCredential.user);
-    await createUserProfile({
-      uid: userCredential.user.uid,
-      email: userCredential.user.email!,
-    });
 
     await registerPushTokenForUser(userCredential.user.uid);
 
@@ -166,7 +163,6 @@ export const signIn = async (
     }
 
     setUser(user);
-    await createUserProfile({ uid: user.uid, email: user.email! });
     await registerPushTokenForUser(user.uid);
 
     router.replace("/(tabs)/home");
@@ -182,16 +178,20 @@ export const signIn = async (
 export const emailRegister = async (
   email: string,
   password: string,
+  username: string,
   setUser: (user: User) => void
 ) => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    setUser(userCredential.user);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password, );
+    const user = userCredential.user;    
+    await updateProfile(user, { displayName: username });
 
-    await createUserProfile({
-      uid: userCredential.user.uid,
-      email: userCredential.user.email!,
-    });
+    // Refresh the user object with updated profile info
+    await user.reload();
+
+    setUser(auth.currentUser!);
+
+    await createUserProfile(userCredential.user);
 
     await sendVerificationLink(userCredential.user);
     Alert.alert("Please verify your email and log in again!");

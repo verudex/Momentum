@@ -66,7 +66,7 @@ const Register = () => {
     }
 
     setIsLoading(true);
-    await emailRegister(email, password, setUser);
+    await emailRegister(email, password, username, setUser);
     setEmail("");
     setUsername("");
     setPassword("");
