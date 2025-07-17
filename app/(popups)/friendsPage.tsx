@@ -20,6 +20,7 @@ import {
   getFriendsList,
   getUserData,
 } from "../../utils/friendsLogic";
+import { useRouter } from "expo-router";
 
 type UserSummary = {
   uid: string;
@@ -31,6 +32,7 @@ const DEFAULT_AVATAR =
   "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // fallback avatar
 
 const FriendsPage = () => {
+  const router = useRouter();
   const { user } = useContext(AuthContext);
   const [usernameInput, setUsernameInput] = useState("");
   const [searchResult, setSearchResult] = useState<UserSummary | null>(null);
@@ -112,11 +114,16 @@ const FriendsPage = () => {
     actions: React.ReactNode
   ) => (
     <View style={styles.card}>
-      <Image
-        source={{ uri: item.photoURL || DEFAULT_AVATAR }}
-        style={styles.avatar}
-      />
-      <Text style={styles.username}>{item.username}</Text>
+      <TouchableOpacity
+        style={styles.profileInfo}
+        onPress={() => router.push({ pathname: "/(popups)/friendProfile", params: { uid: item.uid, name: item.username, photo: item.photoURL } })}
+      >
+        <Image
+          source={{ uri: item.photoURL || DEFAULT_AVATAR }}
+          style={styles.avatar}
+        />
+        <Text style={styles.username}>{item.username}</Text>
+      </TouchableOpacity>
       <View style={styles.cardButtons}>{actions}</View>
     </View>
   );
@@ -215,13 +222,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
     elevation: 2,
     shadowColor: "#aaa",
     shadowOpacity: 0.1,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
+  },
+  profileInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
   },
   avatar: {
     width: 45,
@@ -229,10 +239,14 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     marginRight: 15,
   },
-  username: { fontSize: 16, flex: 1 },
+  username: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
   cardButtons: {
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "flex-start",
+    gap: 12,
   },
   actionBtn: {
     backgroundColor: "#007AFF",

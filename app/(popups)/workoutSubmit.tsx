@@ -14,7 +14,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, Easing } from "react-native-reanimated";
 import { AuthContext } from "../../contexts/AuthContext";
 import WorkoutOptions from "../../utils/workoutOptions";
-import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
 import { Dropdown } from 'react-native-element-dropdown';
 
@@ -86,6 +86,8 @@ const WorkoutSubmit = () => {
       }
     );
 
+
+
     // Update streak object
     await setDoc(metaRef, {
       workoutStreak: newStreak,
@@ -93,6 +95,9 @@ const WorkoutSubmit = () => {
     }, { merge: true });
 
     console.log("Workout recorded & streak updated!");
+
+    // Run update workout hours
+    await addWorkoutHours(user.uid, duration)
 
     setWorkoutName("");
     setDuration({ hours: "", minutes: "", seconds: "" });
@@ -103,6 +108,38 @@ const WorkoutSubmit = () => {
 
     Alert.alert("Workout Recorded!", "Well done!");
   };
+
+  // Add workout hours to tally
+  const addWorkoutHours = async (uid: string, time: typeof duration) => {
+  try {
+    const trackingRef = doc(db, "Users", uid, "streak", "tracking");
+    const trackingSnap = await getDoc(trackingRef);
+
+    if (!trackingSnap.exists()) {
+      // Optionally initialize the document if needed
+      await setDoc(trackingRef, { workoutHours: 0 }, { merge: true });
+    }
+
+    // Convert duration to total minutes
+    const hours = parseInt(time.hours || "0");
+    const minutes = parseInt(time.minutes || "0");
+    const seconds = parseInt(time.seconds || "0");
+    const totalMinutes = hours * 60 + minutes + Math.floor(seconds / 60);
+
+    const data = trackingSnap.data();
+    const currentWorkoutHours = data?.workoutHours ?? 0;
+    const updated = currentWorkoutHours + totalMinutes;
+
+    await updateDoc(trackingRef, {  
+      workoutHours: updated,
+    });
+    console.log(`Successfully updated workoutHours to ${updated}`);
+    return updated;
+  } catch (error) {
+    console.error("Error updating workoutHours:", error);
+    throw error;
+  }
+};
 
   const isNumber = (text: string) => /^\d+$/.test(text);
   const isDecimal = (text: string) => /^\d+(\.\d{0,1})?$/.test(text);

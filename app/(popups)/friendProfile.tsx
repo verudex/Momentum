@@ -1,3 +1,4 @@
+import { useLocalSearchParams, router } from "expo-router";
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
@@ -18,25 +19,16 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-nat
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { app } from "../../utils/firebaseConfig";
 
-const Profile = () => {
+export default function FriendProfilePage() {
   const db = getFirestore(app);
-
-  useDisableBack();
-  const { user, setUser } = useContext(AuthContext);
-  const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
+  const { uid, name, photo } = useLocalSearchParams();
   const [workoutStreak, setWorkoutStreak] = useState<number | null>(null);
   const [workoutHours, setWorkoutHours] = useState<number | null>(null);
   const [loadingStreak, setLoadingStreak] = useState(true);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    await signOut(setUser);
-    setIsLoggingOut(false);
-    router.replace("/");
-    setUser(null);
-  };
+  if (!uid || typeof uid !== "string") {
+    return <Text>User not found</Text>;
+  }
 
   const getWorkoutStreak = async (uid: string): Promise<number | null> => {
     try {
@@ -73,86 +65,35 @@ const Profile = () => {
       return null;
     }
   };
-
-
+  
+  
   useEffect(() => {
     const fetchStreak = async () => {
-      if (user) {
-        const streak = await getWorkoutStreak(user.uid);
-        const hours = await getWorkoutHours(user.uid);
+        const streak = await getWorkoutStreak(uid);
+        const hours = await getWorkoutHours(uid);
         setWorkoutStreak(streak);
         setWorkoutHours(hours);
         setLoadingStreak(false);
-        
-      }
     };
     fetchStreak();
-  }, [user]);
-
-
-
-  const handleChangeProfilePicture = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission denied', 'Please allow access to your photos.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      const image = result.assets[0];
-      const path = `profile_pictures/${user?.uid}.jpg`;
-
-      try {
-        const response = await fetch(image.uri);
-        const blob = await response.blob();
-        const storage = getStorage();
-        const reference = ref(storage, path);
-        await uploadBytes(reference, blob);
-        const downloadURL = await getDownloadURL(reference);
-
-        if (user) {
-          await updateProfile(user, { photoURL: downloadURL });
-          setUser({ ...user, photoURL: downloadURL });
-          Alert.alert('Success', 'Profile picture updated.');
-        }
-      } catch (err) {
-        console.error('Upload failed:', err);
-        Alert.alert('Error', 'Failed to upload profile picture.');
-      }
-    }
-  };
+  });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Profile Card */}
-        <Animated.View 
+    <View style={styles.container}>
+      <Animated.View 
           entering={FadeInDown.duration(500).springify()}
           style={styles.profileCard}
         >
-          <TouchableOpacity onPress={handleChangeProfilePicture}>
             <View style={styles.avatarContainer}>
               <Image
-                source={user?.photoURL ? { uri: user?.photoURL } : require('../../assets/images/default-avatar.png')}
+                source={photo ? { uri: photo } : require('../../assets/images/default-avatar.png')}
                 style={styles.avatar}
               />
-              <View style={styles.editIcon}>
-                <Ionicons name="pencil" size={16} color="white" />
-              </View>
             </View>
-          </TouchableOpacity>
 
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.displayName || 'User'}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
-            
+            <Text style={styles.userName}>{name || 'User'}</Text>
+
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>
@@ -166,80 +107,41 @@ const Profile = () => {
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>Gold</Text>
-                <Text style={styles.statLabel}>HOURS SPENT WORKING OUT</Text>
+                <Text style={styles.statLabel}>SUBSCRIPTION</Text>
               </View>
             </View>
           </View>
         </Animated.View>
 
-        {/* Navigation Buttons */}
-        <View style={styles.menuContainer}>
-          <Animated.View 
-            entering={FadeInUp.duration(500).springify().delay(200)}
-            style={styles.menuButtonContainer}
-          >
-            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("notifications")}>
-              <Ionicons name="notifications-sharp" size={24} color="#4F46E5" />
-              <Text style={styles.menuText}>Notifications</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
-            </TouchableOpacity>
-          </Animated.View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.push({ pathname: "/(popups)/workoutHistory", params: { uid } })}
+      >
+        <Text style={styles.buttonText}>View Workout History</Text>
+      </TouchableOpacity>
 
-          <Animated.View 
-            entering={FadeInUp.duration(500).springify().delay(300)}
-            style={styles.menuButtonContainer}
-          >
-            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("friendsPage")}>
-              <Ionicons name="help-circle-sharp" size={24} color="#4F46E5" />
-              <Text style={styles.menuText}>Friends List</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInUp.duration(500).springify().delay(400)}
-            style={styles.menuButtonContainer}
-          >
-            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("settings")}>
-              <Ionicons name="settings-sharp" size={24} color="#4F46E5" />
-              <Text style={styles.menuText}>Settings</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-
-        {/* Logout Button */}
-        <Animated.View 
-          entering={FadeInUp.duration(500).springify().delay(500)}
-          style={styles.logoutContainer}
-        >
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={[styles.logoutButton, isLoggingOut && styles.disabledButton]}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <>
-                <Ionicons name="log-out-outline" size={20} color="white" />
-                <Text style={styles.logoutText}>Log Out</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
-  )
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.push({ pathname: "/(popups)/dietHistory", params: { uid } })}
+      >
+        <Text style={styles.buttonText}>View Diet History</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
-export default Profile;
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
+  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  header: { fontSize: 24, fontWeight: "bold", marginBottom: 10 },
+  subHeader: { fontSize: 16, marginBottom: 20 },
+  button: {
+    backgroundColor: "#007AFF",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    alignItems: "center",
   },
+  buttonText: { color: "#fff", fontWeight: "bold" },
   scrollContainer: {
     padding: wp(5),
   },
@@ -365,3 +267,4 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
 });
+

@@ -119,6 +119,7 @@ const Home = () => {
           let lastDietChecked = null;
           let lastGoalTypeInDB = null;
           let lastTargetCaloriesInDB = null;
+          let workoutHours = 0;
 
           if (metaSnap.exists()) {
             const data = metaSnap.data();
@@ -127,6 +128,7 @@ const Home = () => {
             lastDietChecked = data.lastDietChecked ?? null;
             lastGoalTypeInDB = data.lastGoalType ?? null;
             lastTargetCaloriesInDB = data.lastTargetCalories ?? null;
+            workoutHours = data.workoutHours ?? null;
           }
 
           setWorkoutStreak(workoutStreakFromDB);
