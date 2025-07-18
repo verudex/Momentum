@@ -25,10 +25,11 @@ import { Dropdown } from 'react-native-element-dropdown';
 import WorkoutOptions from "utils/workoutOptions";
 
 type FriendEntry = {
-  id: string;
+  id: string; 
   name: string;
-  value: string;
-}
+  value: number;
+};
+
 
 type RecentItem = {
   id: string;
@@ -65,7 +66,8 @@ const Home = () => {
 
   // States for Leaderboard
   const [leaderboardFilter, setLeaderboardFilter] = useState("Time Spent");
-  const [sortedLeaderboard, setSortedLeaderboard] = useState(tempFriends.sort((a, b) => b.value - a.value).slice(0, 10));
+  const [sortedLeaderboard, setSortedLeaderboard] = useState<FriendEntry[]>([]);
+
 
   // States for Workout Summary
   const [numWorkoutsThisWeek, setNumWorkoutsThisWeek] = useState(0);
@@ -81,17 +83,77 @@ const Home = () => {
   const [targetData, setTargetData] = useState<any>(null);
   const [goalType, setGoalType] = useState<string>("deficit");
   const [recentMeals, setRecentMeals] = useState<RecentItem[]>([]);
+  const [rankType, setRankType] = useState("Time Spent");
+
+
+  // const updateLeaderboard = async () => {
+  //   const tempSortedLeaderboard = tempFriends
+  //     .sort((a, b) => b.value - a.value)
+  //     .slice(0, 10);
+  //   setSortedLeaderboard(tempSortedLeaderboard);
+  // }
 
   const updateLeaderboard = async () => {
-    const tempSortedLeaderboard = tempFriends
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10);
-    setSortedLeaderboard(tempSortedLeaderboard);
-  }
+    if (!user) return;
+
+    try {
+      const currentUid = user.uid;
+
+      // Get user's friends from userData
+      const userDataRef = doc(db, "userData", currentUid);
+      const userDataSnap = await getDoc(userDataRef);
+      const userFriends: string[] = userDataSnap.data()?.friends || [];
+
+      const allUids = [currentUid, ...userFriends];
+
+      // Prepare entries for leaderboard
+      const leaderboardEntries: { id: string; name: string; value: number }[] = [];
+
+      for (const uid of allUids) {
+        // Get user's display name
+        const profileSnap = await getDoc(doc(db, "userData", uid));
+        const username = profileSnap.data()?.username ?? "Unknown";
+
+        // Get all workouts for this user
+        const workoutsSnap = await getDocs(collection(db, "Users", uid, "workouts"));
+
+        const filteredWorkouts = workoutsSnap.docs
+          .map(doc => doc.data())
+          .filter(workout => workout.name === leaderboardFilter);
+
+        if (filteredWorkouts.length === 0) continue;
+
+        let value = 0;
+
+        if (rankType === "Time Spent") {
+          value = filteredWorkouts.reduce((sum, w) => {
+            const h = parseInt(w.duration?.hours || "0");
+            const m = parseInt(w.duration?.minutes || "0");
+            const s = parseInt(w.duration?.seconds || "0");
+            return sum + h * 60 + m + Math.floor(s / 60); // total minutes
+          }, 0);
+        } else if (rankType === "Max Weight") {
+          value = Math.max(...filteredWorkouts.map(w => parseFloat(w.weight || "0")));
+        }
+
+        leaderboardEntries.push({ id: uid, name: username, value });
+      }
+
+      const sorted = leaderboardEntries
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+
+      setSortedLeaderboard(sorted);
+    } catch (err) {
+      console.error("Failed to update leaderboard:", err);
+    }
+  };
+
 
   useEffect(() => {
     updateLeaderboard();
-  }, [leaderboardFilter])
+  }, [leaderboardFilter, rankType]);
+
 
   // Load data on focus
   useFocusEffect(
@@ -306,55 +368,26 @@ const Home = () => {
 
         {/* Leaderboard */}
         <Animated.View entering={FadeInUp.delay(400).duration(500).springify()} style={styles.card}>
-          <Text style={styles.cardTitle}>🏆 Leaderboard</Text>
+          <Text style={[styles.cardTitle, { marginBottom: hp(1.5) }]}>🏆 Leaderboard</Text>
           {false ? (
             <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginVertical: hp(4) }} />
           ) : (
             <>
               <View style={styles.leaderboardContainer}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* Ranking for - moved to top */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(0.5) }}>
                   <Text style={styles.leaderboardTitle}>Ranking for:</Text>
                   <Dropdown
                     data={WorkoutOptions.map(item => ({ label: item, value: item }))}
-                    labelField="label"
                     valueField="value"
+                    labelField="label"
                     value={leaderboardFilter}
                     onChange={item => setLeaderboardFilter(item.value)}
-                    style={{
-                      width: wp(40),
-                      backgroundColor: '#E5E7EB',
-                      borderRadius: 30,
-                      paddingHorizontal: wp(4),
-                      paddingVertical: hp(0.4),
-                      marginTop: -hp(1),
-                    }}
-                    placeholderStyle={{
-                      fontSize: wp(4),
-                      fontWeight: 'bold',
-                      color: '#4B5563',
-                    }}
-                    selectedTextStyle={{
-                      fontSize: wp(4),
-                      fontWeight: 'bold',
-                      color: '#4B5563',
-                    }}
-                    itemTextStyle={{
-                      fontSize: wp(3.2),
-                      lineHeight: hp(1.5), // close to font size
-                      color: '#374151',
-                    }}
-                    containerStyle={{
-                      width: wp(40),
-                      paddingVertical: hp(0.5),
-                      paddingHorizontal: wp(1),
-                      borderRadius: 30,
-                      elevation: 2,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 1.41
-                    }}
-                    placeholder="Time Spent"
+                    style={styles.dropdown}
+                    placeholderStyle={styles.dropdownText}
+                    selectedTextStyle={styles.dropdownText}
+                    itemTextStyle={styles.dropdownItemText}
+                    containerStyle={styles.dropdownContainer}
                     search
                     searchPlaceholder="Search"
                     inputSearchStyle={{
@@ -366,11 +399,29 @@ const Home = () => {
                   />
                 </View>
 
+                {/* Ranking by - moved below */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.leaderboardTitle}>Ranking by:</Text>
+                  <Dropdown
+                    data={[
+                      { label: "Time Spent", value: "Time Spent" },
+                      { label: "Max Weight", value: "Max Weight" },
+                    ]}
+                    valueField="value"
+                    labelField="label"
+                    value={rankType}
+                    onChange={item => setRankType(item.value)}
+                    style={styles.dropdown}
+                    placeholderStyle={styles.dropdownText}
+                    selectedTextStyle={styles.dropdownText}
+                    itemTextStyle={styles.dropdownItemText}
+                    containerStyle={styles.dropdownContainer}
+                  />
+                </View>
 
                 {sortedLeaderboard.length === 0 ? (
                   <>
                     <Text style={styles.emptyLeaderboard}>Nothing Here!</Text>
-
                     <TouchableOpacity onPress={() => router.push("/(popups)/workoutSubmit")}>
                       <Text style={styles.viewMoreText}>Be the first one to start!</Text>
                     </TouchableOpacity>
@@ -671,5 +722,26 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: wp(4.2),
     color: '#374151',
+  },
+  dropdown: {
+    height: 40,
+    width: 160,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
+    },
+  dropdownText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  dropdownItemText: {
+    fontSize: 14,
+  },
+  dropdownContainer: {
+    borderRadius: 8,
+    elevation: 3,
+    backgroundColor: "#fff",
   },
 });

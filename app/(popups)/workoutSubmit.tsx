@@ -32,6 +32,79 @@ const WorkoutSubmit = () => {
 
   const db = getFirestore(app);
 
+  const addWorkoutHours = async (uid: string, time: typeof duration) => {
+    try {
+      const trackingRef = doc(db, "Users", uid, "streak", "tracking");
+      let trackingSnap = await getDoc(trackingRef);
+
+      if (!trackingSnap.exists()) {
+        // Initialize with 0s if not present
+        await setDoc(trackingRef, {
+          workoutHours: 0,
+          workoutMinutes: 0,
+          workoutSeconds: 0,
+        }, { merge: true });
+        
+        trackingSnap = await getDoc(trackingRef);
+      }
+
+      // Convert incoming time
+      const addHours = parseInt(time.hours || "0");
+      const addMinutes = parseInt(time.minutes || "0");
+      const addSeconds = parseInt(time.seconds || "0");
+
+      const data = trackingSnap.exists() ? trackingSnap.data() : {};
+      const currentHours = data.workoutHours ?? 0;
+      const currentMinutes = data.workoutMinutes ?? 0;
+      const currentSeconds = data.workoutSeconds ?? 0;
+
+      // Add up total values
+      let newSeconds = currentSeconds + addSeconds;
+      let newMinutes = currentMinutes + addMinutes;
+      let newHours = currentHours + addHours;
+
+      // Normalize overflow
+      if (newSeconds >= 60) {
+        newMinutes += Math.floor(newSeconds / 60);
+        newSeconds %= 60;
+      }
+
+      if (newMinutes >= 60) {
+        newHours += Math.floor(newMinutes / 60);
+        newMinutes %= 60;
+      }
+
+      await updateDoc(trackingRef, {
+        workoutHours: newHours,
+        workoutMinutes: newMinutes,
+        workoutSeconds: newSeconds,
+      });
+
+      console.log(`Updated to ${newHours}h ${newMinutes}m ${newSeconds}s`);
+    } catch (error) {
+      console.error("Error updating workout time breakdown:", error);
+      throw error;
+    }
+  }
+
+  const addWorkoutNumber = async (uid: string) => {
+    try {
+      const trackingRef = doc(db, "Users", uid, "streak", "tracking");
+      const trackingSnap = await getDoc(trackingRef);
+      const data = trackingSnap.exists() ? trackingSnap.data() : {};
+
+      
+      const currentNumber = data.workoutNumber ?? 0;
+
+      await updateDoc(trackingRef, {
+        workoutNumber : currentNumber + 1,
+      });
+    } catch (error) {
+      console.error("Error updating workout number: ", error);
+      throw error;
+    }
+  }
+
   const handleSubmit = async () => {
     console.log("Submit button clicked");
     setIsLoading(true);
@@ -86,7 +159,11 @@ const WorkoutSubmit = () => {
       }
     );
 
+    // Run addWorkoutHours
+    await addWorkoutHours(user.uid, duration);
 
+    // Run addWorkoutNumber
+    await addWorkoutNumber(user.uid);
 
     // Update streak object
     await setDoc(metaRef, {
@@ -95,51 +172,16 @@ const WorkoutSubmit = () => {
     }, { merge: true });
 
     console.log("Workout recorded & streak updated!");
-
-    // Run update workout hours
-    await addWorkoutHours(user.uid, duration)
-
+    setIsLoading(false);
     setWorkoutName("");
     setDuration({ hours: "", minutes: "", seconds: "" });
     setReps("");
     setSets("");
     setWeight("");
     setIsLoading(false);
-
-    Alert.alert("Workout Recorded!", "Well done!");
-  };
-
-  // Add workout hours to tally
-  const addWorkoutHours = async (uid: string, time: typeof duration) => {
-  try {
-    const trackingRef = doc(db, "Users", uid, "streak", "tracking");
-    const trackingSnap = await getDoc(trackingRef);
-
-    if (!trackingSnap.exists()) {
-      // Optionally initialize the document if needed
-      await setDoc(trackingRef, { workoutHours: 0 }, { merge: true });
-    }
-
-    // Convert duration to total minutes
-    const hours = parseInt(time.hours || "0");
-    const minutes = parseInt(time.minutes || "0");
-    const seconds = parseInt(time.seconds || "0");
-    const totalMinutes = hours * 60 + minutes + Math.floor(seconds / 60);
-
-    const data = trackingSnap.data();
-    const currentWorkoutHours = data?.workoutHours ?? 0;
-    const updated = currentWorkoutHours + totalMinutes;
-
-    await updateDoc(trackingRef, {  
-      workoutHours: updated,
-    });
-    console.log(`Successfully updated workoutHours to ${updated}`);
-    return updated;
-  } catch (error) {
-    console.error("Error updating workoutHours:", error);
-    throw error;
-  }
+    Alert.alert("Workout Recorded!", "Well done!")
 };
+
 
   const isNumber = (text: string) => /^\d+$/.test(text);
   const isDecimal = (text: string) => /^\d+(\.\d{0,1})?$/.test(text);

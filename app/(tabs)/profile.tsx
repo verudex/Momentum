@@ -27,7 +27,8 @@ const Profile = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const [workoutStreak, setWorkoutStreak] = useState<number | null>(null);
-  const [workoutHours, setWorkoutHours] = useState<number | null>(null);
+  const [workoutHours, setWorkoutHours] = useState<String | null>(null);
+  const [workoutNumber, setWorkoutNumber] = useState<number | null>(null);
   const [loadingStreak, setLoadingStreak] = useState(true);
 
   const handleLogout = async () => {
@@ -56,14 +57,14 @@ const Profile = () => {
     }
   };
 
-  const getWorkoutHours = async (uid: string): Promise<number | null> => {
+  const getWorkoutHours = async (uid: string): Promise<String | null> => {
     try {
       const streakDocRef = doc(db, "Users", uid, "streak", "tracking");
       const streakSnap = await getDoc(streakDocRef);
 
       if (streakSnap.exists()) {
         const data = streakSnap.data();
-        return data.workoutHours ?? null;
+        return data.workoutHours + "h " + data.workoutMinutes + "m " + data.workoutSeconds + "s";
       } else {
         console.warn("No workout hours data found");
         return null;
@@ -74,16 +75,35 @@ const Profile = () => {
     }
   };
 
+    const getWorkoutNumber = async (uid: string): Promise<number | null> => {
+    try {
+      const streakDocRef = doc(db, "Users", uid, "streak", "tracking");
+      const streakSnap = await getDoc(streakDocRef);
+
+      if (streakSnap.exists()) {
+        const data = streakSnap.data();
+        return data.workoutNumber ?? null;
+      } else {
+        console.warn("No workout Number data found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Failed to fetch workout number:", error);
+      return null;
+    }
+  };
+
 
   useEffect(() => {
     const fetchStreak = async () => {
       if (user) {
         const streak = await getWorkoutStreak(user.uid);
         const hours = await getWorkoutHours(user.uid);
+        const workoutNumber = await getWorkoutNumber(user.uid);
         setWorkoutStreak(streak);
         setWorkoutHours(hours);
+        setWorkoutNumber(workoutNumber);
         setLoadingStreak(false);
-        
       }
     };
     fetchStreak();
@@ -156,17 +176,17 @@ const Profile = () => {
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>
-                  {loadingStreak ? "..." : workoutStreak ?? "001"}
+                  {loadingStreak ? "..." : workoutStreak ?? "No Data"}
                 </Text>
                 <Text style={styles.statLabel}>WORKOUT STREAK</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{loadingStreak ? "..." : workoutHours ?? "001"}</Text>
+                <Text style={styles.statValue}>{loadingStreak ? "..." : workoutHours ?? "No Data"}</Text>
                 <Text style={styles.statLabel}>min of workouts</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>Gold</Text>
-                <Text style={styles.statLabel}>HOURS SPENT WORKING OUT</Text>
+                <Text style={styles.statValue}>{loadingStreak ? "..." : workoutNumber ?? "No Data"}</Text>
+                <Text style={styles.statLabel}>Total Workouts</Text>
               </View>
             </View>
           </View>
@@ -290,27 +310,32 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: hp(2),
-    paddingTop: hp(2),
-    borderTopWidth: wp(0.3),
-    borderTopColor: '#E5E7EB',
+  flexDirection: 'row',
+  justifyContent: 'space-between', 
+  width: '100%',
+  marginTop: hp(2),
+  paddingTop: hp(2),
+  borderTopWidth: wp(0.3),
+  borderTopColor: '#E5E7EB',
+  paddingHorizontal: wp(2), 
   },
   statItem: {
     alignItems: 'center',
-    paddingHorizontal: wp(3),
+    width: '30%', 
+    paddingHorizontal: wp(1), 
   },
   statValue: {
     fontSize: wp(5),
     fontWeight: 'bold',
     color: '#4F46E5',
+    textAlign: 'center', 
   },
   statLabel: {
-    fontSize: wp(3.5),
+    fontSize: wp(3),
     color: '#6B7280',
     marginTop: hp(0.5),
+    textAlign: 'center', // Ensure text is centered
+    flexWrap: 'wrap', // Allow text to wrap if needed
   },
   menuContainer: {
     marginBottom: hp(3),
