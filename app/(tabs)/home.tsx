@@ -65,7 +65,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   // States for Leaderboard
-  const [leaderboardFilter, setLeaderboardFilter] = useState("Time Spent");
+  const [leaderboardFilter, setLeaderboardFilter] = useState("");
   const [sortedLeaderboard, setSortedLeaderboard] = useState<FriendEntry[]>([]);
 
 
@@ -83,7 +83,7 @@ const Home = () => {
   const [targetData, setTargetData] = useState<any>(null);
   const [goalType, setGoalType] = useState<string>("deficit");
   const [recentMeals, setRecentMeals] = useState<RecentItem[]>([]);
-  const [rankType, setRankType] = useState("Time Spent");
+  const [rankType, setRankType] = useState("");
 
 
   // const updateLeaderboard = async () => {
@@ -289,7 +289,15 @@ const Home = () => {
             }
           });
 
-          const signedDiff = extremeDiff > 0 ? `+${extremeDiff}` : `${extremeDiff}`;
+          let signedDiff: string;
+
+          if (!isFinite(extremeDiff)) {
+            signedDiff = "None";
+            extremeDay = ""; // optional: clear date as well
+          } else {
+            signedDiff = extremeDiff > 0 ? `+${extremeDiff}` : `${extremeDiff}`;
+          }
+
           setMostOffDay({ date: extremeDay, diff: signedDiff });
 
           // --------------------
@@ -375,8 +383,11 @@ const Home = () => {
             <>
               <View style={styles.leaderboardContainer}>
                 {/* Ranking for - moved to top */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(0.5) }}>
-                  <Text style={styles.leaderboardTitle}>Ranking for:</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={{ paddingTop: hp(1) }}>
+                    <Text style={styles.leaderboardTitle}>Ranking for:</Text>
+                  </View>
+
                   <Dropdown
                     data={WorkoutOptions.map(item => ({ label: item, value: item }))}
                     valueField="value"
@@ -384,6 +395,7 @@ const Home = () => {
                     value={leaderboardFilter}
                     onChange={item => setLeaderboardFilter(item.value)}
                     style={styles.dropdown}
+                    placeholder="(Select Workout)"
                     placeholderStyle={styles.dropdownText}
                     selectedTextStyle={styles.dropdownText}
                     itemTextStyle={styles.dropdownItemText}
@@ -395,13 +407,18 @@ const Home = () => {
                       fontSize: hp(1.5),
                       borderRadius: 30,
                     }}
-                    maxHeight={hp(25)}
+                    maxHeight={hp(20)}
                   />
                 </View>
 
                 {/* Ranking by - moved below */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={styles.leaderboardTitle}>Ranking by:</Text>
+                <View style={{ 
+                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+                  borderBottomWidth: wp(0.3), borderBottomColor: '#E5E7EB', paddingBottom: hp(0.8) }}>
+                  <View style={{ paddingTop: hp(1) }}>
+                    <Text style={styles.leaderboardTitle}>Ranking by:</Text>
+                  </View>
+
                   <Dropdown
                     data={[
                       { label: "Time Spent", value: "Time Spent" },
@@ -412,6 +429,7 @@ const Home = () => {
                     value={rankType}
                     onChange={item => setRankType(item.value)}
                     style={styles.dropdown}
+                    placeholder="(Select Value)"
                     placeholderStyle={styles.dropdownText}
                     selectedTextStyle={styles.dropdownText}
                     itemTextStyle={styles.dropdownItemText}
@@ -617,10 +635,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   leaderboardContainer: {
-    paddingTop: hp(1.2),
+    paddingTop: hp(0.8),
     borderTopWidth: wp(0.3),
     borderTopColor: '#E5E7EB',
-    marginTop: hp(1)
   },
   leaderboardTitle: {
     fontSize: wp(4),
@@ -651,7 +668,8 @@ const styles = StyleSheet.create({
     fontSize: wp(4),
     color: '#9CA3AF',
     textAlign: 'center',
-    marginTop: hp(2)
+    marginTop: hp(2),
+
   },
   statsContainer: {
     flexDirection: 'row',
@@ -724,23 +742,24 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   dropdown: {
-    height: 40,
-    width: 160,
+    height: hp(4),
+    width: wp(45),
     borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderWidth: 0.5,
+    borderRadius: 20,
+    paddingLeft: wp(3),
+    paddingRight: wp(1.5),
     backgroundColor: "#fff",
     },
   dropdownText: {
-    fontSize: 14,
+    fontSize: hp(1.5),
     color: "#333",
   },
   dropdownItemText: {
-    fontSize: 14,
+    fontSize: hp(1.5),
   },
   dropdownContainer: {
-    borderRadius: 8,
+    borderRadius: 20,
     elevation: 3,
     backgroundColor: "#fff",
   },

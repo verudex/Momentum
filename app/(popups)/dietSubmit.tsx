@@ -32,12 +32,12 @@ const DietSubmit = () => {
 		try {
 			const API_BASE_URL = "https://momentum-mbw7.onrender.com";
 
-			const response = await fetch(`${API_BASE_URL}/api/calculate`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({ input: foodAmount + " " + foodName }),
+			const response = await fetch(`${API_BASE_URL}/api/calculate/calories`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ input: foodAmount + " " + foodName }),
 			});
 
 			const data = await response.json();

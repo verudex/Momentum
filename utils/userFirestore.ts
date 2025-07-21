@@ -32,6 +32,12 @@ export const dataTest = async () => {
 // Create a user document
 export const createUserProfile = async (user: User) => {
   const userRef = doc(db, "userData", user.uid);
+  const snapshot = await getDoc(userRef);
+
+  if (snapshot.exists()) {
+    // Profile already exists — skip creation
+    return userRef;
+  }
 
   const userData = {
     uid: user.uid,
@@ -45,9 +51,7 @@ export const createUserProfile = async (user: User) => {
     receivedRequests: [],
   };
 
-
-  await setDoc(userRef, userData, { merge: true });
-
+  await setDoc(userRef, userData);
   return userRef;
 };
 

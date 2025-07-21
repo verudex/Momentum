@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "expo-router";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, User, signOut } from "firebase/auth";
 import { app } from "../utils/firebaseConfig";
 
 // Define user type from Web SDK
@@ -35,7 +35,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const authInstance = getAuth(app);
-    const unsubscribe = onAuthStateChanged(authInstance, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(authInstance, async (firebaseUser) => {
+      // Check if it's a password user AND not verified
+      if (
+        firebaseUser &&
+        !firebaseUser.emailVerified &&
+        firebaseUser.providerData[0]?.providerId === "password"
+      ) {
+        await signOut(authInstance);
+        setUser(null);
+        setInitializing(false);
+        return;
+      }
+
       setUser(firebaseUser);
       setInitializing(false);
     });

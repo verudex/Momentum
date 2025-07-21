@@ -66,12 +66,17 @@ const Register = () => {
     }
 
     setIsLoading(true);
-    await emailRegister(email, password, username, setUser);
+    await emailRegister(email, password, username);
+    setIsLoading(false);
+
+    // Clear fields
     setEmail("");
     setUsername("");
     setPassword("");
     setConfirmPassword("");
-    setIsLoading(false);
+
+    // Optional: redirect to login screen
+    router.replace("/(auth)/login");
   };
 
   return (

@@ -24,7 +24,7 @@ const Startup = () => {
         <StatusBar barStyle="light-content" />
         <View style={styles.overlay} />
 
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
           <Animated.Image
             entering={FadeInDown.duration(1000).springify()}      
             source={require("../../assets/images/CurvedBackground.png")} // your white curve image
@@ -68,7 +68,7 @@ const Startup = () => {
               </Animated.View>
             </View>
           </View>
-        </SafeAreaView>
+        </View>
       </ImageBackground>
     </SafeAreaView>
   );

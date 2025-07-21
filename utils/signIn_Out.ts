@@ -11,66 +11,12 @@ import {
   User,
   updateProfile,
 } from "firebase/auth";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  arrayUnion,
-  arrayRemove
-} from "firebase/firestore";
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { app } from "./firebaseConfig";
 import { router } from "expo-router";
 import { createUserProfile } from "./userFirestore";
 
 // Firebase instances
 const auth = getAuth(app);
-const db = getFirestore(app);
-
-// ==============================
-// 🔥 PUSH TOKEN HELPERS
-// ==============================
-const registerPushTokenForUser = async (uid: string) => {
-  console.log("Starting registration of push token...");
-  if (!Device.isDevice) return;
-  console.log("Awaiting permissions for push token...");
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-  if (finalStatus !== 'granted') return;
-
-  const tokenData = await Notifications.getExpoPushTokenAsync();
-  console.log('Push token registered:', tokenData.data);
-
-  await setDoc(doc(db, 'Users', uid), {
-    tokens: arrayUnion(tokenData.data)
-  }, { merge: true });
-};
-
-const removePushTokenForUser = async (uid: string) => {
-  if (!uid) return;
-  if (!Device.isDevice) return;
-
-  try {
-    console.log("Getting push token...");
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    console.log('Retrieved push token:', tokenData.data);
-
-    await setDoc(doc(db, 'Users', uid), {
-      tokens: arrayRemove(tokenData.data)
-    }, { merge: true });
-
-  } catch (error) {
-    console.error("Failed to remove push token from Firestore:", error);
-  }
-};
-
-
-
 
 // ==============================
 // 🔥 ERROR HANDLER
@@ -118,7 +64,7 @@ export const googleSignIn = async (setUser: (user: User) => void) => {
 
     setUser(userCredential.user);
 
-    await registerPushTokenForUser(userCredential.user.uid);
+    await createUserProfile(userCredential.user);
 
     return {
       success: true,
@@ -147,6 +93,7 @@ export const signIn = async (
     const user = userCredential.user;
 
     await user.reload();
+
     if (!user.emailVerified) {
       Alert.alert(
         "Email Not Verified",
@@ -159,11 +106,13 @@ export const signIn = async (
           { text: "OK", style: "cancel" },
         ]
       );
+      await firebaseSignOut(auth);
       return;
     }
 
+    // Safe to store data now
+    await createUserProfile(user);
     setUser(user);
-    await registerPushTokenForUser(user.uid);
 
     router.replace("/(tabs)/home");
 
@@ -179,24 +128,17 @@ export const emailRegister = async (
   email: string,
   password: string,
   username: string,
-  setUser: (user: User) => void
 ) => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password, );
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;    
     await updateProfile(user, { displayName: username });
 
     // Refresh the user object with updated profile info
     await user.reload();
 
-    setUser(auth.currentUser!);
-
-    await createUserProfile(userCredential.user);
-
     await sendVerificationLink(userCredential.user);
     Alert.alert("Please verify your email and log in again!");
-
-    await registerPushTokenForUser(userCredential.user.uid);
 
   } catch (error) {
     handleAuthError(error);
@@ -225,13 +167,6 @@ const sendVerificationLink = async (user: User) => {
 // ==============================
 export const signOut = async (setUser: (user: null) => void) => {
   try {
-    const user = auth.currentUser;
-
-    if (user) {
-      // Only try remove token if still logged in
-      await removePushTokenForUser(user.uid);
-    }
-
     // Then sign out from auth & Google
     await firebaseSignOut(auth);
     await GoogleSignin.signOut();

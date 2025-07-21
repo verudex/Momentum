@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { 
   StyleSheet, 
   Text, 
@@ -27,10 +27,26 @@ const WorkoutSubmit = () => {
   const [reps, setReps] = useState("");
   const [weight, setWeight] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [unit, setUnit] = useState<"metric" | "imperial">("metric");
 
   const isInvalid = !workoutName;
 
   const db = getFirestore(app);
+
+  useEffect(() => {
+    const fetchUnitPreference = async () => {
+      if (!user) return;
+
+      const userDocRef = doc(db, "userData", user.uid);
+      const userSnap = await getDoc(userDocRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        setUnit(userData.unitPreference === "imperial" ? "imperial" : "metric");
+      }
+    };
+
+    fetchUnitPreference();
+  }, [user]);
 
   const addWorkoutHours = async (uid: string, time: typeof duration) => {
     try {
@@ -146,7 +162,6 @@ const WorkoutSubmit = () => {
       }
     }
 
-    // Add workout record
     await addDoc(
       collection(db, "Users", user.uid, "workouts"),
       {
@@ -155,6 +170,7 @@ const WorkoutSubmit = () => {
         sets,
         reps,
         weight,
+        unit, // ← new field
         timestamp: serverTimestamp(),
       }
     );
@@ -329,7 +345,7 @@ const WorkoutSubmit = () => {
                 if (text === "" || isDecimal(text)) setWeight(text);
               }}
             />
-            <Text style={styles.kgLabel}>kg</Text>
+            <Text style={styles.kgLabel}>{unit === "metric" ? "kg" : "lbs"}</Text>
           </View>
         </Animated.View>
 

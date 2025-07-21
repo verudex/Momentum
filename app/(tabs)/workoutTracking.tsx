@@ -4,18 +4,18 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useDisableBack } from "../../hooks/useDisableBack";
-import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
+import Animated, { FadeInUp, FadeInLeft } from "react-native-reanimated";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
-
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 const WorkoutTracking = () => {
   useDisableBack();
   const router = useRouter();
-  
+
   return (
-    <SafeAreaView style={[styles.container, {marginTop: -useHeaderHeight() / 2}]}>
+    <SafeAreaView style={[styles.container, { marginTop: -useHeaderHeight() / 2 }]}>
       <View style={styles.innerWrapper}>
-        <Animated.Text 
+        <Animated.Text
           adjustsFontSizeToFit
           numberOfLines={1}
           entering={FadeInUp.duration(500).springify()}
@@ -24,7 +24,7 @@ const WorkoutTracking = () => {
           Workout Tracking
         </Animated.Text>
 
-        <Animated.Text 
+        <Animated.Text
           adjustsFontSizeToFit
           numberOfLines={1}
           entering={FadeInUp.delay(200).duration(500).springify()}
@@ -33,21 +33,26 @@ const WorkoutTracking = () => {
           What would you like to do?
         </Animated.Text>
 
-        <Animated.View 
-          entering={FadeInLeft.delay(300).duration(1000).springify()} 
-          style={styles.buttonWrapper}
+        <Animated.View
+          entering={FadeInLeft.delay(300).duration(1000).springify()}
+          style={styles.buttonsWrapper}
         >
-          <TouchableOpacity 
-            style={styles.historyButton}
-            onPress={() => {
-              router.push("/(popups)/workoutHistory")}
-            }
+          <TouchableOpacity
+            style={styles.recordButton}
+            onPress={() => router.push("/(popups)/workoutSubmit")}
           >
-            <Text style={styles.historyButtonText}>View workout history</Text>
+            <Text style={styles.recordButtonText}>Record a workout</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.historyButton}
+            onPress={() => router.push("/(popups)/workoutHistory")}
+          >
+            <FontAwesome name="history" size={hp(3.5)} color="white" />
           </TouchableOpacity>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInLeft.delay(400).duration(1000).springify()}
           style={styles.dividerWrapper}
         >
@@ -56,31 +61,30 @@ const WorkoutTracking = () => {
           <View style={styles.divider} />
         </Animated.View>
 
-        <Animated.View 
-          entering={FadeInLeft.delay(500).duration(1000).springify()} 
-          style={styles.buttonWrapper}
+        <Animated.View
+          entering={FadeInLeft.delay(500).duration(1000).springify()}
+          style={styles.aiPlanWrapper}
         >
-          <TouchableOpacity 
-            style={styles.submitButton}
-            onPress={() => router.push("/(popups)/workoutSubmit")}
+          <TouchableOpacity
+            style={styles.aiPlanButton}
+            onPress={() => router.push("/(popups)/workoutPlan")}
           >
-            <Text style={styles.submitButtonText}>Record a workout</Text>
+            <Text style={styles.aiPlanButtonText}>View AI Workout Plan</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
-
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default WorkoutTracking
+export default WorkoutTracking;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: "#F9FAFB",
     paddingHorizontal: wp(8),
   },
   innerWrapper: {
@@ -99,25 +103,43 @@ const styles = StyleSheet.create({
     color: "rgb(146, 136, 136)",
     marginBottom: hp(1.5),
   },
-  historyButton: {
-    width: "100%",
+  buttonsWrapper: {
+    flexDirection: "row",
     marginTop: hp(2),
-    backgroundColor: "white",
-    paddingVertical: hp(3),
-    borderRadius: 30,
+    marginBottom: hp(0),
+  },
+  recordButton: {
+    flex: 7,
+    backgroundColor: "#34D399",
+    paddingVertical: hp(2.5),
+    borderTopLeftRadius: 30,
+    borderBottomLeftRadius: 30,
     alignItems: "center",
-    shadowColor: '#4F46E5',
+    borderRightWidth: 1,
+    borderRightColor: "rgb(57, 53, 53)",
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: hp(0.5) },
-    shadowOpacity: 0.1,
+    shadowOpacity: 1,
     shadowRadius: wp(3),
     elevation: 4,
-    borderWidth: wp(0.3),
-    borderColor: "#E5E7EB",
   },
-  historyButtonText: {
-    color: '#4F46E5',
-    fontWeight: "600",
+  recordButtonText: {
+    color: "white",
     fontSize: hp(3),
+    fontWeight: "bold",
+  },
+  historyButton: {
+    flex: 2,
+    backgroundColor: "#34D399",
+    borderTopRightRadius: 30,
+    borderBottomRightRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: hp(0.5) },
+    shadowOpacity: 1,
+    shadowRadius: wp(3),
+    elevation: 4,
   },
   dividerWrapper: {
     flexDirection: "row",
@@ -136,14 +158,13 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     color: "#9CA3AF",
   },
-  buttonWrapper: {
+  aiPlanWrapper: {
     alignItems: "center",
-    backgroundColor: "transparent",
   },
-  submitButton: {
-    width: "100%",
-    backgroundColor: '#4F46E5',
-    paddingVertical: hp(3),
+  aiPlanButton: {
+    backgroundColor: "#7C3AED",
+    paddingVertical: hp(2.5),
+    paddingHorizontal: wp(9.5),
     borderRadius: 30,
     alignItems: "center",
     shadowColor: '#000',
@@ -152,9 +173,9 @@ const styles = StyleSheet.create({
     shadowRadius: wp(4),
     elevation: 6,
   },
-  submitButtonText: {
+  aiPlanButtonText: {
     color: "white",
-    fontWeight: "600",
     fontSize: hp(3),
+    fontWeight: "bold",
   },
 });

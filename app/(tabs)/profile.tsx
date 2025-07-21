@@ -1,21 +1,31 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useCallback, useState } from 'react';
 import { AuthContext } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
 import { 
   StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator, Image, ScrollView 
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
+import { useFocusEffect } from '@react-navigation/native';
 import { useDisableBack } from "../../hooks/useDisableBack";
 import { signOut } from "../../utils/signIn_Out";
-import { FontAwesome6, Ionicons, AntDesign } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons, AntDesign } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import * as FileSystem from 'expo-file-system';
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  orderBy, 
+  getDocs, 
+  where, 
+  Timestamp,
+  doc,
+  getDoc,
+} from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
 
 const Profile = () => {
@@ -26,10 +36,10 @@ const Profile = () => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
-  const [workoutStreak, setWorkoutStreak] = useState<number | null>(null);
-  const [workoutHours, setWorkoutHours] = useState<String | null>(null);
-  const [workoutNumber, setWorkoutNumber] = useState<number | null>(null);
-  const [loadingStreak, setLoadingStreak] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [numWorkoutsThisWeek, setNumWorkoutsThisWeek] = useState(0);
+  const [totalWorkoutTimeThisWeek, setTotalWorkoutTimeThisWeek] = useState({ hours: 0, minutes: 0 });
+  const [workoutStreak, setWorkoutStreak] = useState(0);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -38,78 +48,6 @@ const Profile = () => {
     router.replace("/");
     setUser(null);
   };
-
-  const getWorkoutStreak = async (uid: string): Promise<number | null> => {
-    try {
-      const streakDocRef = doc(db, "Users", uid, "streak", "tracking");
-      const streakSnap = await getDoc(streakDocRef);
-
-      if (streakSnap.exists()) {
-        const data = streakSnap.data();
-        return data.workoutStreak ?? null;
-      } else {
-        console.warn("No workout streak data found");
-        return null;
-      }
-    } catch (error) {
-      console.error("Failed to fetch workout streak:", error);
-      return null;
-    }
-  };
-
-  const getWorkoutHours = async (uid: string): Promise<String | null> => {
-    try {
-      const streakDocRef = doc(db, "Users", uid, "streak", "tracking");
-      const streakSnap = await getDoc(streakDocRef);
-
-      if (streakSnap.exists()) {
-        const data = streakSnap.data();
-        return data.workoutHours + "h " + data.workoutMinutes + "m " + data.workoutSeconds + "s";
-      } else {
-        console.warn("No workout hours data found");
-        return null;
-      }
-    } catch (error) {
-      console.error("Failed to fetch workout hours:", error);
-      return null;
-    }
-  };
-
-    const getWorkoutNumber = async (uid: string): Promise<number | null> => {
-    try {
-      const streakDocRef = doc(db, "Users", uid, "streak", "tracking");
-      const streakSnap = await getDoc(streakDocRef);
-
-      if (streakSnap.exists()) {
-        const data = streakSnap.data();
-        return data.workoutNumber ?? null;
-      } else {
-        console.warn("No workout Number data found");
-        return null;
-      }
-    } catch (error) {
-      console.error("Failed to fetch workout number:", error);
-      return null;
-    }
-  };
-
-
-  useEffect(() => {
-    const fetchStreak = async () => {
-      if (user) {
-        const streak = await getWorkoutStreak(user.uid);
-        const hours = await getWorkoutHours(user.uid);
-        const workoutNumber = await getWorkoutNumber(user.uid);
-        setWorkoutStreak(streak);
-        setWorkoutHours(hours);
-        setWorkoutNumber(workoutNumber);
-        setLoadingStreak(false);
-      }
-    };
-    fetchStreak();
-  }, [user]);
-
-
 
   const handleChangeProfilePicture = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -149,6 +87,83 @@ const Profile = () => {
     }
   };
 
+  // Load data on focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+
+      const fetchData = async () => {
+        setLoading(true);
+
+        try {
+          const now = new Date();
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+          startOfWeek.setHours(5, 0, 0, 0);
+
+          // --------------------
+          // LOAD streak doc
+          // --------------------
+          const metaDocRef = doc(db, 'Users', user.uid, 'streak', 'tracking');
+          const metaSnap = await getDoc(metaDocRef);
+
+          let workoutStreakFromDB = 0;
+          let dietStreakFromDB = 0;
+          let lastDietChecked = null;
+          let lastGoalTypeInDB = null;
+          let lastTargetCaloriesInDB = null;
+          let workoutHours = 0;
+
+          if (metaSnap.exists()) {
+            const data = metaSnap.data();
+            workoutStreakFromDB = data.workoutStreak ?? 0;
+            dietStreakFromDB = data.dietStreak ?? 0;
+            lastDietChecked = data.lastDietChecked ?? null;
+            lastGoalTypeInDB = data.lastGoalType ?? null;
+            lastTargetCaloriesInDB = data.lastTargetCalories ?? null;
+            workoutHours = data.workoutHours ?? null;
+          }
+
+          setWorkoutStreak(workoutStreakFromDB);
+
+          // --------------------
+          // WORKOUT SUMMARY
+          // --------------------
+          const workoutsQuery = query(
+            collection(db, 'Users', user.uid, 'workouts'),
+            where("timestamp", ">=", Timestamp.fromDate(startOfWeek)),
+            orderBy("timestamp", "desc")
+          );
+          const workoutSnap = await getDocs(workoutsQuery);
+
+          let numThisWeek = 0;
+          let totalMinutes = 0;
+          workoutSnap.forEach(doc => {
+            numThisWeek++;
+            const data = doc.data();
+            if (data.duration) {
+              totalMinutes += parseInt(data.duration.hours || "0") * 60
+                + parseInt(data.duration.minutes || "0");
+            }
+          });
+
+          setNumWorkoutsThisWeek(numThisWeek);
+          setTotalWorkoutTimeThisWeek({
+            hours: Math.floor(totalMinutes / 60),
+            minutes: totalMinutes % 60,
+          });
+
+          setLoading(false);
+        } catch (err) {
+          console.error("Failed to fetch/update data:", err);
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+    }, [user])
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -173,46 +188,37 @@ const Profile = () => {
             <Text style={styles.userName}>{user?.displayName || 'User'}</Text>
             <Text style={styles.userEmail}>{user?.email}</Text>
             
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {loadingStreak ? "..." : workoutStreak ?? "No Data"}
-                </Text>
-                <Text style={styles.statLabel}>WORKOUT STREAK</Text>
+            {loading ? (
+              <ActivityIndicator size="large" color="#4F46E5" />
+            ) : (
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{numWorkoutsThisWeek}</Text>
+                  <Text style={styles.statLabel}>Workouts This Week</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{totalWorkoutTimeThisWeek.hours}h {totalWorkoutTimeThisWeek.minutes}m</Text>
+                  <Text style={styles.statLabel}>Time Spent Grinding</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{workoutStreak}</Text>
+                  <Text style={styles.statLabel}>Day Streak</Text>
+                </View>
               </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{loadingStreak ? "..." : workoutHours ?? "No Data"}</Text>
-                <Text style={styles.statLabel}>min of workouts</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{loadingStreak ? "..." : workoutNumber ?? "No Data"}</Text>
-                <Text style={styles.statLabel}>Total Workouts</Text>
-              </View>
-            </View>
+            )}
           </View>
         </Animated.View>
 
         {/* Navigation Buttons */}
         <View style={styles.menuContainer}>
           <Animated.View 
-            entering={FadeInUp.duration(500).springify().delay(200)}
-            style={styles.menuButtonContainer}
-          >
-            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("notifications")}>
-              <Ionicons name="notifications-sharp" size={24} color="#4F46E5" />
-              <Text style={styles.menuText}>Notifications</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <Animated.View 
             entering={FadeInUp.duration(500).springify().delay(300)}
             style={styles.menuButtonContainer}
           >
             <TouchableOpacity style={styles.menuButton} onPress={() => router.push("friendsPage")}>
-              <Ionicons name="help-circle-sharp" size={24} color="#4F46E5" />
-              <Text style={styles.menuText}>Friends List</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
+              <FontAwesome5 name="user-friends" size={hp(2)} color="#4F46E5" />
+              <Text style={styles.menuText}>Friends</Text>
+              <Ionicons name="chevron-forward" size={hp(2.2)} color="#9CA3AF"/>
             </TouchableOpacity>
           </Animated.View>
 
@@ -221,9 +227,9 @@ const Profile = () => {
             style={styles.menuButtonContainer}
           >
             <TouchableOpacity style={styles.menuButton} onPress={() => router.push("settings")}>
-              <Ionicons name="settings-sharp" size={24} color="#4F46E5" />
+              <Ionicons name="settings-sharp" size={hp(2.5)} color="#4F46E5" />
               <Text style={styles.menuText}>Settings</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF"/>
+              <Ionicons name="chevron-forward" size={hp(2.2)} color="#9CA3AF"/>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -310,14 +316,14 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   statsContainer: {
-  flexDirection: 'row',
-  justifyContent: 'space-between', 
-  width: '100%',
-  marginTop: hp(2),
-  paddingTop: hp(2),
-  borderTopWidth: wp(0.3),
-  borderTopColor: '#E5E7EB',
-  paddingHorizontal: wp(2), 
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    width: '100%',
+    marginTop: hp(2),
+    paddingTop: hp(2),
+    borderTopWidth: wp(0.3),
+    borderTopColor: '#E5E7EB',
+    paddingHorizontal: wp(2), 
   },
   statItem: {
     alignItems: 'center',

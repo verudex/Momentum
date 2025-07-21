@@ -9,6 +9,7 @@ import {
   Alert,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  TouchableOpacity,
 } from 'react-native';
 import {
   getFirestore,
@@ -19,11 +20,13 @@ import {
   getDocs,
   startAfter,
   QueryDocumentSnapshot,
-  DocumentData
+  DocumentData,
+  deleteDoc,
+  doc,
 } from 'firebase/firestore';
 import { AuthContext } from "../../contexts/AuthContext";
 import { app } from '../../utils/firebaseConfig';
-import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
+import Animated, { FadeInUp, FadeInLeft } from "react-native-reanimated";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 type Food = {
@@ -48,11 +51,11 @@ const DietHistory = () => {
 
   if (!effectiveUid) {
     Alert.alert("Error", "No user ID provided.");
-    return;
+    return null;
   }
 
-  const fetchFood = async (loadMore = false) => {
-    if (user == null) {
+  const fetchFoods = async (loadMore = false) => {
+    if (!user) {
       Alert.alert("Error", "User not logged in.");
       return;
     }
@@ -80,7 +83,7 @@ const DietHistory = () => {
   };
 
   useEffect(() => {
-    fetchFood();
+    fetchFoods();
   }, []);
 
   const handleScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -90,20 +93,15 @@ const DietHistory = () => {
 
     if (bottomReached && !loadingMore && !endReached) {
       setLoadingMore(true);
-      fetchFood(true);
+      fetchFoods(true);
     }
   };
 
   const getShiftedDayKey = (timestamp: any) => {
     const date = new Date(timestamp.seconds * 1000);
-    const clone = new Date(date); // clone to avoid mutation
-
-    // If before 5AM, treat it as part of the *previous day*
-    if (clone.getHours() < 5) {
-      clone.setDate(clone.getDate() - 1);
-    }
-
-    return clone.toDateString(); // e.g., "Wed Jun 26 2025"
+    const clone = new Date(date);
+    if (clone.getHours() < 5) clone.setDate(clone.getDate() - 1);
+    return clone.toDateString();
   };
 
   const renderedFoodList = () => {
@@ -124,20 +122,45 @@ const DietHistory = () => {
             entering={FadeInLeft.delay(idx % 10 * 200).duration(500).springify()}
             style={styles.card}
           >
-            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.foodName}>
-              {food.name}
-            </Text>
+            <View style={styles.cardHeader}>
+              <View style={{ width: "85%" }}>
+                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.foodName}>{food.name}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    "Delete Entry",
+                    "Are you sure you want to delete this meal?",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            await deleteDoc(doc(db, 'Users', effectiveUid!, 'diet', food.id));
+                            setFoods(prev => prev.filter(f => f.id !== food.id));
+                          } catch (error) {
+                            Alert.alert("Error", "Failed to delete food entry.");
+                            console.error("Delete error:", error);
+                          }
+                        }
+                      }
+                    ]
+                  );
+                }}
+              >
+                <Text style={styles.deleteIcon}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
             <Text style={styles.foodAmount}>Amount: {food.amount}</Text>
             <Text style={styles.foodCalories}>Calories: {food.calories}</Text>
             <Text style={styles.timestamp}>
               {new Date(food.timestamp.seconds * 1000).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
+                year: 'numeric', month: 'long', day: 'numeric',
               }) + ' at ' + new Date(food.timestamp.seconds * 1000).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
+                hour: 'numeric', minute: '2-digit', hour12: true,
               })}
             </Text>
           </Animated.View>
@@ -157,7 +180,6 @@ const DietHistory = () => {
         >
           Food History
         </Animated.Text>
-
         <Animated.Text
           entering={FadeInUp.delay(200).duration(500).springify()}
           style={styles.subHeader}
@@ -174,9 +196,8 @@ const DietHistory = () => {
             entering={FadeInUp.delay(300).duration(500).springify()}
             style={styles.emptyText}
           >
-            Nothing but crickets here... 🦗
+            Nothing but crickets here... 🧇
           </Animated.Text>
-
           <Animated.Text
             entering={FadeInUp.delay(500).duration(500).springify()}
             style={styles.emptyText}
@@ -197,10 +218,10 @@ const DietHistory = () => {
         </ScrollView>
       )}
     </View>
-  )
-}
+  );
+};
 
-export default DietHistory
+export default DietHistory;
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -211,7 +232,7 @@ const styles = StyleSheet.create({
     fontSize: hp(5),
     fontWeight: 'bold',
     textAlign: 'center',
-    color: 'rgb(57, 53, 53)"',
+    color: 'rgb(57, 53, 53)',
   },
   subHeader: {
     textAlign: 'center',
@@ -246,6 +267,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  deleteIcon: {
+    fontSize: hp(3),
+    color: '#cfd2d8ff',
+    paddingHorizontal: wp(2),
+    paddingBottom: hp(1.5),
+    fontWeight: 'bold',
+  },
   foodName: {
     fontSize: hp(3.5),
     fontWeight: '600',
@@ -267,11 +300,11 @@ const styles = StyleSheet.create({
   dateDivider: {
     fontSize: hp(2.2),
     fontWeight: 'bold',
-    color: '#4B5563', // soft grey text
-    backgroundColor: '#E5E7EB', // light grey background
+    color: '#4B5563',
+    backgroundColor: '#E5E7EB',
     paddingHorizontal: wp(4),
     paddingVertical: hp(0.6),
-    borderRadius: 9999, // fully rounded
+    borderRadius: 9999,
     alignSelf: "center",
     marginVertical: hp(1),
     overflow: 'hidden',
