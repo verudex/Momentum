@@ -93,60 +93,76 @@ const Home = () => {
   // }
 
   const updateLeaderboard = async () => {
-    if (!user) return;
+  if (!user || !leaderboardFilter || !rankType) return;
 
-    try {
-      const currentUid = user.uid;
+  try {
+    const currentUid = user.uid;
 
-      // Get user's friends from userData
-      const userDataRef = doc(db, "userData", currentUid);
-      const userDataSnap = await getDoc(userDataRef);
-      const userFriends: string[] = userDataSnap.data()?.friends || [];
+    const userDataRef = doc(db, "userData", currentUid);
+    const userDataSnap = await getDoc(userDataRef);
+    const userFriends: string[] = userDataSnap.data()?.friends || [];
 
-      const allUids = [currentUid, ...userFriends];
+    const allUids = [currentUid, ...userFriends];
+    const leaderboardEntries: { id: string; name: string; value: any }[] = [];
 
-      // Prepare entries for leaderboard
-      const leaderboardEntries: { id: string; name: string; value: number }[] = [];
+    for (const uid of allUids) {
+      const profileSnap = await getDoc(doc(db, "userData", uid));
+      const username = profileSnap.data()?.username ?? "Unknown";
 
-      for (const uid of allUids) {
-        // Get user's display name
-        const profileSnap = await getDoc(doc(db, "userData", uid));
-        const username = profileSnap.data()?.username ?? "Unknown";
+      const workoutsSnap = await getDocs(collection(db, "Users", uid, "workouts"));
 
-        // Get all workouts for this user
-        const workoutsSnap = await getDocs(collection(db, "Users", uid, "workouts"));
+      const filteredWorkouts = workoutsSnap.docs
+        .map(doc => doc.data())
+        .filter(workout => workout.name === leaderboardFilter);
 
-        const filteredWorkouts = workoutsSnap.docs
-          .map(doc => doc.data())
-          .filter(workout => workout.name === leaderboardFilter);
+      if (filteredWorkouts.length === 0) continue;
 
-        if (filteredWorkouts.length === 0) continue;
+      let value: any = 0;
 
-        let value = 0;
+      if (rankType === "Time Spent") {
+        let maxDuration = { hours: 0, minutes: 0, seconds: 0 };
 
-        if (rankType === "Time Spent") {
-          value = filteredWorkouts.reduce((sum, w) => {
-            const h = parseInt(w.duration?.hours || "0");
-            const m = parseInt(w.duration?.minutes || "0");
-            const s = parseInt(w.duration?.seconds || "0");
-            return sum + h * 60 + m + Math.floor(s / 60); // total minutes
-          }, 0);
-        } else if (rankType === "Max Weight") {
-          value = Math.max(...filteredWorkouts.map(w => parseFloat(w.weight || "0")));
-        }
+        filteredWorkouts.forEach(w => {
+          const h = parseInt(w.duration?.hours || "0");
+          const m = parseInt(w.duration?.minutes || "0");
+          const s = parseInt(w.duration?.seconds || "0");
 
-        leaderboardEntries.push({ id: uid, name: username, value });
+          const totalSeconds = h * 3600 + m * 60 + s;
+          const maxTotalSeconds =
+            maxDuration.hours * 3600 + maxDuration.minutes * 60 + maxDuration.seconds;
+
+          if (totalSeconds > maxTotalSeconds) {
+            maxDuration = { hours: h, minutes: m, seconds: s };
+          }
+        });
+
+        const { hours, minutes, seconds } = maxDuration;
+        value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      } else if (rankType === "Max Weight") {
+        value = Math.max(...filteredWorkouts.map(w => parseFloat(w.weight || "0")));
       }
 
-      const sorted = leaderboardEntries
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-
-      setSortedLeaderboard(sorted);
-    } catch (err) {
-      console.error("Failed to update leaderboard:", err);
+      leaderboardEntries.push({ id: uid, name: username, value });
     }
-  };
+
+    const sorted = leaderboardEntries
+      .sort((a, b) => {
+        if (rankType === "Time Spent") {
+          const [ah, am, as] = a.value.split(":").map(Number);
+          const [bh, bm, bs] = b.value.split(":").map(Number);
+          return (bh * 3600 + bm * 60 + bs) - (ah * 3600 + am * 60 + as);
+        } else {
+          return b.value - a.value;
+        }
+      })
+      .slice(0, 10);
+
+    setSortedLeaderboard(sorted);
+  } catch (err) {
+    console.error("Failed to update leaderboard:", err);
+  }
+};
+
 
 
   useEffect(() => {
@@ -464,9 +480,6 @@ const Home = () => {
                       </View>
                     );
                   })}
-                  <TouchableOpacity onPress={() => { /* maybe router.push("/(popups)/fullLeaderboard") */ }}>
-                    <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>View more...</Text>
-                  </TouchableOpacity>
                 </>
               )}
             </View>
