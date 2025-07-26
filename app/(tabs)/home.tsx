@@ -23,6 +23,7 @@ import { useDisableBack } from "hooks/useDisableBack";
 import { useFocusEffect } from '@react-navigation/native';
 import { Dropdown } from 'react-native-element-dropdown';
 import WorkoutOptions from "utils/workoutOptions";
+import { ThemeContext } from "../../contexts/ThemeContext";
 
 type FriendEntry = {
   id: string; 
@@ -37,29 +38,27 @@ type RecentItem = {
   timestamp: any;
 };
 
-const tempFriends = [
-  { id: 1, name: "Alice", value: 45 },
-  { id: 2, name: "Bob", value: 70 },
-  { id: 3, name: "Charlie", value: 65 },
-  { id: 4, name: "Diana", value: 80 },
-  { id: 5, name: "Ethan", value: 60 },
-  { id: 6, name: "Fay", value: 90 },
-  { id: 7, name: "George", value: 50 },
-  { id: 8, name: "Hannah", value: 75 },
-  { id: 9, name: "Ian", value: 55 },
-  { id: 10, name: "Jane", value: 85 },
-  { id: 11, name: "Kyle", value: 68 },
-  { id: 12, name: "Lily", value: 78 },
-  { id: 13, name: "Mike", value: 73 },
-  { id: 14, name: "Nora", value: 88 },
-  { id: 15, name: "Oscar", value: 63 },
-];
-
 const Home = () => {
   useDisableBack();
   const { user } = useContext(AuthContext);
   const db = getFirestore(app);
   const router = useRouter();
+  
+  // Dark Mode
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
+
+  // Define colors depending on mode
+  const colors = {
+    background: isDarkMode ? '#121212' : '#F9FAFB',
+    cardBackground: isDarkMode ? '#1E1E1E' : 'white',
+    primaryText: isDarkMode ? '#F3F4F6' : '#1F2937',
+    secondaryText: isDarkMode ? '#A1A1AA' : '#6B7280',
+    tertiaryText: isDarkMode ? '#9CA3AF' : '#9CA3AF',
+    borderColor: isDarkMode ? '#333' : '#E5E7EB',
+    accentColor: '#7C3AED',
+    shadowColor: isDarkMode ? '#000' : '#4F46E5',
+  };
 
   // General States
   const [loading, setLoading] = useState(true);
@@ -368,234 +367,235 @@ const Home = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Animated.Text entering={FadeInDown.delay(200).duration(500).springify()} style={styles.title}>
-          Welcome Back 👋
-        </Animated.Text>
+    <ScrollView contentContainerStyle={[styles.scrollContainer, { backgroundColor: colors.background }]}>
+      <Animated.Text entering={FadeInDown.delay(200).duration(500).springify()} style={[styles.title, { color: colors.primaryText }]}>
+        Welcome Back 👋
+      </Animated.Text>
 
-        {/* Leaderboard */}
-        <Animated.View entering={FadeInUp.delay(400).duration(500).springify()} style={styles.card}>
-          <Text style={[styles.cardTitle, { marginBottom: hp(1.5) }]}>🏆 Leaderboard</Text>
-          {false ? (
-            <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginVertical: hp(4) }} />
-          ) : (
-            <>
-              <View style={styles.leaderboardContainer}>
-                {/* Ranking for - moved to top */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ paddingTop: hp(1) }}>
-                    <Text style={styles.leaderboardTitle}>Ranking for:</Text>
-                  </View>
-
-                  <Dropdown
-                    data={WorkoutOptions.map(item => ({ label: item, value: item }))}
-                    valueField="value"
-                    labelField="label"
-                    value={leaderboardFilter}
-                    onChange={item => setLeaderboardFilter(item.value)}
-                    style={styles.dropdown}
-                    placeholder="(Select Workout)"
-                    placeholderStyle={styles.dropdownText}
-                    selectedTextStyle={styles.dropdownText}
-                    itemTextStyle={styles.dropdownItemText}
-                    containerStyle={styles.dropdownContainer}
-                    search
-                    searchPlaceholder="Search"
-                    inputSearchStyle={{
-                      height: hp(4),
-                      fontSize: hp(1.5),
-                      borderRadius: 30,
-                    }}
-                    maxHeight={hp(20)}
-                  />
+      {/* Leaderboard */}
+      <Animated.View entering={FadeInUp.delay(400).duration(500).springify()} style={[styles.card, { backgroundColor: colors.cardBackground, shadowColor: colors.shadowColor }]}>
+        <Text style={[styles.cardTitle, { marginBottom: hp(1.5), color: colors.accentColor }]}>🏆 Leaderboard</Text>
+        {false ? (
+          <ActivityIndicator size="large" color={colors.secondaryText} style={{ marginVertical: hp(4) }} />
+        ) : (
+          <>
+            <View style={[styles.leaderboardContainer, { borderTopColor: colors.borderColor }]}>
+              {/* Ranking for - moved to top */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ paddingTop: hp(1) }}>
+                  <Text style={[styles.leaderboardTitle, { color: colors.secondaryText, backgroundColor: isDarkMode ? '#333' : '#E5E7EB' }]}>Ranking for:</Text>
                 </View>
 
-                {/* Ranking by - moved below */}
-                <View style={{ 
-                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
-                  borderBottomWidth: wp(0.3), borderBottomColor: '#E5E7EB', paddingBottom: hp(0.8) }}>
-                  <View style={{ paddingTop: hp(1) }}>
-                    <Text style={styles.leaderboardTitle}>Ranking by:</Text>
-                  </View>
-
-                  <Dropdown
-                    data={[
-                      { label: "Time Spent", value: "Time Spent" },
-                      { label: "Max Weight", value: "Max Weight" },
-                    ]}
-                    valueField="value"
-                    labelField="label"
-                    value={rankType}
-                    onChange={item => setRankType(item.value)}
-                    style={styles.dropdown}
-                    placeholder="(Select Value)"
-                    placeholderStyle={styles.dropdownText}
-                    selectedTextStyle={styles.dropdownText}
-                    itemTextStyle={styles.dropdownItemText}
-                    containerStyle={styles.dropdownContainer}
-                  />
-                </View>
-
-                {sortedLeaderboard.length === 0 ? (
-                  <>
-                    <Text style={styles.emptyLeaderboard}>Nothing Here!</Text>
-                    <TouchableOpacity onPress={() => router.push("/(popups)/workoutSubmit")}>
-                      <Text style={styles.viewMoreText}>Be the first one to start!</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    {sortedLeaderboard.map((entry, index) => {
-                      let placeIcon = ` ${index + 1}.`;
-                      if (index === 0) placeIcon = '🥇';
-                      else if (index === 1) placeIcon = '🥈';
-                      else if (index === 2) placeIcon = '🥉';
-
-                      return (
-                        <View key={index} style={styles.leaderboardRow}>
-                          <Text style={styles.leaderboardName} numberOfLines={1} ellipsizeMode="tail">
-                            {placeIcon} {entry.name}
-                          </Text>
-                          <Text style={styles.leaderboardValue}>
-                            {entry.value}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                    <TouchableOpacity onPress={() => { /* maybe router.push("/(popups)/fullLeaderboard") */ }}>
-                      <Text style={styles.viewMoreText}>View more...</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </>
-          )}
-        </Animated.View>
-
-        {/* Workout Summary */}
-        <Animated.View entering={FadeInUp.delay(500).duration(500).springify()} style={styles.card}>
-          <Text style={styles.cardTitle}>💪 Workout Summary</Text>
-          {loading ? (
-            <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginVertical: hp(4) }} />
-          ) : (
-            <>
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{numWorkoutsThisWeek}</Text>
-                  <Text style={styles.statLabel}>Workouts This Week</Text>
-                </View>
-
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{totalWorkoutTimeThisWeek.hours}h {totalWorkoutTimeThisWeek.minutes}m</Text>
-                  <Text style={styles.statLabel}>Time Spent Grinding</Text>
-                </View>
-
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{workoutStreak}</Text>
-                  <Text style={styles.statLabel}>Day Streak</Text>
-                </View>
+                <Dropdown
+                  data={WorkoutOptions.map(item => ({ label: item, value: item }))}
+                  valueField="value"
+                  labelField="label"
+                  value={leaderboardFilter}
+                  onChange={item => setLeaderboardFilter(item.value)}
+                  style={[styles.dropdown, { backgroundColor: colors.cardBackground, borderColor: colors.borderColor }]}
+                  placeholder="(Select Workout)"
+                  placeholderStyle={[styles.dropdownText, { color: colors.secondaryText }]}
+                  selectedTextStyle={[styles.dropdownText, { color: colors.primaryText }]}
+                  itemTextStyle={styles.dropdownItemText}
+                  containerStyle={[styles.dropdownContainer, { backgroundColor: colors.cardBackground }]}
+                  search
+                  searchPlaceholder="Search"
+                  inputSearchStyle={{
+                    height: hp(4),
+                    fontSize: hp(1.5),
+                    borderRadius: 30,
+                    color: colors.primaryText,
+                    backgroundColor: colors.cardBackground,
+                  }}
+                  maxHeight={hp(20)}
+                />
               </View>
 
-              <View style={styles.historyContainer}>
-                <Text style={styles.historyTitle}>Workout History:</Text>
+              {/* Ranking by - moved below */}
+              <View style={{
+                flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                borderBottomWidth: wp(0.3), borderBottomColor: colors.borderColor, paddingBottom: hp(0.8)
+              }}>
+                <View style={{ paddingTop: hp(1) }}>
+                  <Text style={[styles.leaderboardTitle, { color: colors.secondaryText, backgroundColor: isDarkMode ? '#333' : '#E5E7EB' }]}>Ranking by:</Text>
+                </View>
 
-                {recentWorkouts.length === 0 ? (
-                  <>
-                    <Text style={styles.emptyHistory}>Nothing Here!</Text>
+                <Dropdown
+                  data={[
+                    { label: "Time Spent", value: "Time Spent" },
+                    { label: "Max Weight", value: "Max Weight" },
+                  ]}
+                  valueField="value"
+                  labelField="label"
+                  value={rankType}
+                  onChange={item => setRankType(item.value)}
+                  style={[styles.dropdown, { backgroundColor: colors.cardBackground, borderColor: colors.borderColor }]}
+                  placeholder="(Select Value)"
+                  placeholderStyle={[styles.dropdownText, { color: colors.secondaryText }]}
+                  selectedTextStyle={[styles.dropdownText, { color: colors.primaryText }]}
+                  itemTextStyle={styles.dropdownItemText}
+                  containerStyle={[styles.dropdownContainer, { backgroundColor: colors.cardBackground }]}
+                />
+              </View>
 
-                    <TouchableOpacity onPress={() => router.push("/(popups)/workoutSubmit")}>
-                      <Text style={styles.viewMoreText}>Start now!</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    {recentWorkouts.map(workout => (
-                      <View key={workout.id} style={styles.historyRow}>
-                        <Text style={styles.historyWorkout} numberOfLines={1} ellipsizeMode="tail">
-                          {workout.name}
+              {sortedLeaderboard.length === 0 ? (
+                <>
+                  <Text style={[styles.emptyLeaderboard, { color: colors.tertiaryText }]}>Nothing Here!</Text>
+                  <TouchableOpacity onPress={() => router.push("/(popups)/workoutSubmit")}>
+                    <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>Be the first one to start!</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  {sortedLeaderboard.map((entry, index) => {
+                    let placeIcon = ` ${index + 1}.`;
+                    if (index === 0) placeIcon = '🥇';
+                    else if (index === 1) placeIcon = '🥈';
+                    else if (index === 2) placeIcon = '🥉';
+
+                    return (
+                      <View key={index} style={styles.leaderboardRow}>
+                        <Text style={[styles.leaderboardName, { color: colors.primaryText }]} numberOfLines={1} ellipsizeMode="tail">
+                          {placeIcon} {entry.name}
                         </Text>
-
-                        <Text style={styles.historyDate}>
-                          {`${new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-GB', { weekday: 'short' })} • ${new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`}
+                        <Text style={[styles.leaderboardValue, { color: colors.secondaryText }]}>
+                          {entry.value}
                         </Text>
                       </View>
-                    ))}
-                    <TouchableOpacity onPress={() => router.push("/(popups)/workoutHistory")}>
-                      <Text style={styles.viewMoreText}>View more...</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </>
-          )}
-        </Animated.View>
+                    );
+                  })}
+                  <TouchableOpacity onPress={() => { /* maybe router.push("/(popups)/fullLeaderboard") */ }}>
+                    <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>View more...</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </>
+        )}
+      </Animated.View>
 
-        {/* Diet Summary */}
-        <Animated.View entering={FadeInUp.delay(600).duration(500).springify()} style={styles.card}>
-          <Text style={styles.cardTitle}>🍎 Diet Summary</Text>
-          {loadingDiet ? (
-            <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginVertical: hp(4) }} />
-          ) : (
-            <>
-              <View style={[
-                styles.statsContainer,
-                !targetData && { justifyContent: 'space-evenly' } // if no target, center nicely
-              ]}>
+      {/* Workout Summary */}
+      <Animated.View entering={FadeInUp.delay(500).duration(500).springify()} style={[styles.card, { backgroundColor: colors.cardBackground, shadowColor: colors.shadowColor }]}>
+        <Text style={[styles.cardTitle, { color: colors.accentColor }]}>💪 Workout Summary</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.secondaryText} style={{ marginVertical: hp(4) }} />
+        ) : (
+          <>
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.accentColor }]}>{numWorkoutsThisWeek}</Text>
+                <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Workouts This Week</Text>
+              </View>
+
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.accentColor }]}>{totalWorkoutTimeThisWeek.hours}h {totalWorkoutTimeThisWeek.minutes}m</Text>
+                <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Time Spent Grinding</Text>
+              </View>
+
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.accentColor }]}>{workoutStreak}</Text>
+                <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Day Streak</Text>
+              </View>
+            </View>
+
+            <View style={[styles.historyContainer, { borderTopColor: colors.borderColor }]}>
+              <Text style={[styles.historyTitle, { color: colors.secondaryText, backgroundColor: isDarkMode ? '#333' : '#E5E7EB' }]}>Workout History:</Text>
+
+              {recentWorkouts.length === 0 ? (
+                <>
+                  <Text style={[styles.emptyHistory, { color: colors.tertiaryText }]}>Nothing Here!</Text>
+
+                  <TouchableOpacity onPress={() => router.push("/(popups)/workoutSubmit")}>
+                    <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>Start now!</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  {recentWorkouts.map(workout => (
+                    <View key={workout.id} style={styles.historyRow}>
+                      <Text style={[styles.historyWorkout, { color: colors.primaryText }]} numberOfLines={1} ellipsizeMode="tail">
+                        {workout.name}
+                      </Text>
+
+                      <Text style={[styles.historyDate, { color: colors.secondaryText }]}>
+                        {`${new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-GB', { weekday: 'short' })} • ${new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`}
+                      </Text>
+                    </View>
+                  ))}
+                  <TouchableOpacity onPress={() => router.push("/(popups)/workoutHistory")}>
+                    <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>View more...</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </>
+        )}
+      </Animated.View>
+
+      {/* Diet Summary */}
+      <Animated.View entering={FadeInUp.delay(600).duration(500).springify()} style={[styles.card, { backgroundColor: colors.cardBackground, shadowColor: colors.shadowColor }]}>
+        <Text style={[styles.cardTitle, { color: colors.accentColor }]}>🍎 Diet Summary</Text>
+        {loadingDiet ? (
+          <ActivityIndicator size="large" color={colors.secondaryText} style={{ marginVertical: hp(4) }} />
+        ) : (
+          <>
+            <View style={[
+              styles.statsContainer,
+              !targetData && { justifyContent: 'space-evenly' } // if no target, center nicely
+            ]}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.accentColor }]}>{avgCalories}</Text>
+                <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Avg kcal/day this week</Text>
+              </View>
+
+              {targetData && recentMeals.length > 0 && (
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{avgCalories}</Text>
-                  <Text style={styles.statLabel}>Avg kcal/day this week</Text>
+                  <Text style={[styles.statValue, { color: colors.accentColor }]}>{mostOffDay.diff}</Text>
+                  <Text style={[styles.statLabel, { color: colors.secondaryText }]}>
+                    {goalType === "deficit" ? "Greatest kcal Deficit" : "Greatest kcal Surplus"}
+                  </Text>
                 </View>
+              )}
 
-                {targetData && recentMeals.length > 0 && (
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{mostOffDay.diff}</Text>
-                    <Text style={styles.statLabel}>
-                      {goalType === "deficit" ? "Greatest kcal Deficit" : "Greatest kcal Surplus"}
-                    </Text>
-                  </View>
-                )}
-
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{dietStreak}</Text>
-                  <Text style={styles.statLabel}>Day Streak</Text>
-                </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.accentColor }]}>{dietStreak}</Text>
+                <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Day Streak</Text>
               </View>
+            </View>
 
-              <View style={styles.historyContainer}>
-                <Text style={styles.historyTitle}>Diet History:</Text>
+            <View style={[styles.historyContainer, { borderTopColor: colors.borderColor }]}>
+              <Text style={[styles.historyTitle, { color: colors.secondaryText, backgroundColor: isDarkMode ? '#333' : '#E5E7EB' }]}>Diet History:</Text>
 
-                {recentMeals.length === 0 ? (
-                  <>
-                    <Text style={styles.emptyHistory}>Nothing Here!</Text>
-                    <TouchableOpacity onPress={() => router.push("/(popups)/dietSubmit")}>
-                      <Text style={styles.viewMoreText}>Start now!</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    {recentMeals.map(meal => (
-                      <View key={meal.id} style={styles.historyRow}>
-                        <Text style={styles.historyWorkout} numberOfLines={1} ellipsizeMode="tail">
-                          {meal.name}
-                        </Text>
+              {recentMeals.length === 0 ? (
+                <>
+                  <Text style={[styles.emptyHistory, { color: colors.tertiaryText }]}>Nothing Here!</Text>
+                  <TouchableOpacity onPress={() => router.push("/(popups)/dietSubmit")}>
+                    <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>Start now!</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  {recentMeals.map(meal => (
+                    <View key={meal.id} style={styles.historyRow}>
+                      <Text style={[styles.historyWorkout, { color: colors.primaryText }]} numberOfLines={1} ellipsizeMode="tail">
+                        {meal.name}
+                      </Text>
 
-                        <Text style={styles.historyDate}>
-                          {`${new Date(meal.timestamp.seconds * 1000).toLocaleDateString('en-GB', { weekday: 'short' })} • ${new Date(meal.timestamp.seconds * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`}
-                        </Text>
-                      </View>
-                    ))}
-                    <TouchableOpacity onPress={() => router.push("/(popups)/dietHistory")}>
-                      <Text style={styles.viewMoreText}>View more...</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </>
-          )}
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+                      <Text style={[styles.historyDate, { color: colors.secondaryText }]}>
+                        {`${new Date(meal.timestamp.seconds * 1000).toLocaleDateString('en-GB', { weekday: 'short' })} • ${new Date(meal.timestamp.seconds * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`}
+                      </Text>
+                    </View>
+                  ))}
+                  <TouchableOpacity onPress={() => router.push("/(popups)/dietHistory")}>
+                    <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>View more...</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </>
+        )}
+      </Animated.View>
+    </ScrollView>
   );
 };
 

@@ -11,6 +11,8 @@ import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "fi
 import { app } from "../../utils/firebaseConfig";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import CircularProgress from "../../components/CircularProgress";
+import { ThemeContext } from "../../contexts/ThemeContext";
+
 
 
 const DietTracking = () => {
@@ -22,6 +24,8 @@ const DietTracking = () => {
   const [remainingCalories, setRemainingCalories] = useState(0);
   const [mode, setMode] = useState("deficit");
   const [loading, setLoading] = useState(true);
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
 
   const db = getFirestore(app);
 
@@ -83,40 +87,34 @@ const DietTracking = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.titleWrapper}>
-        <Animated.Text
-          adjustsFontSizeToFit
-          numberOfLines={1}
-          entering={FadeInUp.duration(500).springify()}
-          style={styles.title}
-        >
-          Diet Tracking
-        </Animated.Text>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F9FAFB' }]}>
+      {/* Titles */}
+      <Animated.Text
+        style={[styles.title, { color: isDarkMode ? '#E0E0E0' : 'rgb(57, 53, 53)' }]}
+      >
+        Diet Tracking
+      </Animated.Text>
 
-      <View style={styles.subtitleWrapper}>
-        <Animated.Text
-          adjustsFontSizeToFit
-          numberOfLines={1}
-          entering={FadeInUp.delay(200).duration(500).springify()}
-          style={styles.subtitle}
-        >
-          What did you eat today?
-        </Animated.Text>
-      </View>
+      <Animated.Text
+        style={[styles.subtitle, { color: isDarkMode ? '#A0A0A0' : 'rgb(146, 136, 136)' }]}
+      >
+        What did you eat today?
+      </Animated.Text>
 
+      {/* Loading */}
       {loading ? (
-        <View style={{ paddingVertical: hp(15.5) }}>
-          <ActivityIndicator size="large" color="rgb(146, 136, 136)" />
-        </View>
+        <ActivityIndicator
+          size="large"
+          color={isDarkMode ? '#AAA' : 'rgb(146, 136, 136)'}
+          style={{ paddingVertical: hp(15.5) }}
+        />
       ) : (
         <>
           <CircularProgress 
             percentage={percentage} 
             size={hp(25)} 
-            color="#10B981"
-            bgColor="rgb(57, 53, 53)"
+            color={isDarkMode ? "#10B981" : "#10B981"}
+            bgColor={isDarkMode ? "#393535" : "rgb(57, 53, 53)"}
           />
 
           {remainingCalories !== null && (
@@ -126,7 +124,7 @@ const DietTracking = () => {
                   style={{
                     fontSize: hp(2.3),
                     fontWeight: "bold",
-                    color: remainingCalories < 0 ? "red" : "black",
+                    color: remainingCalories < 0 ? "red" : (isDarkMode ? "#E0E0E0" : "black"),
                     paddingHorizontal: wp(3),
                     textAlign: "center",
                   }}
@@ -140,7 +138,7 @@ const DietTracking = () => {
                   style={{
                     fontSize: hp(2.3),
                     fontWeight: "bold",
-                    color: remainingCalories < 0 ? "green" : "black",
+                    color: remainingCalories < 0 ? "green" : (isDarkMode ? "#E0E0E0" : "black"),
                     paddingHorizontal: wp(3),
                     textAlign: "center",
                   }}
@@ -155,46 +153,55 @@ const DietTracking = () => {
         </>
       )}
 
-      <Animated.View 
-        entering={FadeInLeft.delay(300).duration(1000).springify()}
-        style={styles.buttonsWrapper}
+      {/* Buttons */}
+      <Animated.View
+        style={[
+          styles.buttonsWrapper,
+          { backgroundColor: isDarkMode ? "#121212" : "transparent" },
+        ]}
       >
         <TouchableOpacity
-          style={styles.recordButton}
+          style={[
+            styles.recordButton,
+            { backgroundColor: isDarkMode ? "#10B981" : "#34D399" },
+            // borderRightColor for dark mode
+            { borderRightColor: isDarkMode ? "#303030" : "rgb(57, 53, 53)" },
+          ]}
           onPress={() => router.push("/(popups)/dietSubmit")}
         >
-          <Text style={styles.recordButtonText}>Check/Record calories</Text>
+          <Text style={[styles.recordButtonText, { color: "#F0F0F0" }]}>Check/Record calories</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.historyButton}
+          style={[styles.historyButton, { backgroundColor: isDarkMode ? "#10B981" : "#34D399" }]}
           onPress={() => router.push("/(popups)/dietHistory")}
         >
           <FontAwesome name="history" size={hp(3.5)} color="white" />
         </TouchableOpacity>
       </Animated.View>
 
-      <Animated.View
-        entering={FadeInLeft.delay(400).duration(1000).springify()}
-        style={styles.dividerWrapper}
-      >
-        <View style={styles.divider} />
-        <Text style={styles.orText}>or</Text>
-        <View style={styles.divider} />
+      {/* Divider */}
+      <Animated.View style={styles.dividerWrapper}>
+        <View style={[styles.divider, { backgroundColor: isDarkMode ? "#303030" : "#D1D5DB" }]} />
+        <Text style={[styles.orText, { color: isDarkMode ? "#707070" : "#9CA3AF" }]}>or</Text>
+        <View style={[styles.divider, { backgroundColor: isDarkMode ? "#303030" : "#D1D5DB" }]} />
       </Animated.View>
 
-      <Animated.View
-        entering={FadeInLeft.delay(500).duration(1000).springify()}
-        style={styles.changeTargetWrapper}
-      >
+      {/* Change target */}
+      <Animated.View style={styles.changeTargetWrapper}>
         <TouchableOpacity
-          style={styles.changeTargetButton}
+          style={[
+            styles.changeTargetButton,
+            { backgroundColor: isDarkMode ? "#8B5CF6" : "#7C3AED" },
+            // shadows can stay the same or be toned down
+          ]}
           onPress={() => router.push("/(popups)/dietTarget")}
         >
-          <Text style={styles.changeTargetButtonText}>Set a new target!</Text>
+          <Text style={[styles.changeTargetButtonText, { color: "#F0F0F0" }]}>Set a new target!</Text>
         </TouchableOpacity>
       </Animated.View>
     </SafeAreaView>
+
   )
 }
 

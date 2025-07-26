@@ -19,6 +19,8 @@ import { Feather } from "@expo/vector-icons";
 import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
 import { googleSignIn, signIn } from "../../utils/signIn_Out";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ThemeContext } from "../../contexts/ThemeContext";
+
 
 const Login = () => {
   const insets = useSafeAreaInsets();
@@ -31,6 +33,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isInvalid = !email || !password;
+
+  const { theme, toggleTheme } = useContext(ThemeContext);
 
   // Waits for assets to load before showing screen.
   const assetsReady = useAssetPreload([

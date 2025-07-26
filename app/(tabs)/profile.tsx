@@ -27,6 +27,7 @@ import {
   getDoc,
 } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
+import { ThemeContext } from "../../contexts/ThemeContext";
 
 const Profile = () => {
   const db = getFirestore(app);
@@ -40,6 +41,8 @@ const Profile = () => {
   const [numWorkoutsThisWeek, setNumWorkoutsThisWeek] = useState(0);
   const [totalWorkoutTimeThisWeek, setTotalWorkoutTimeThisWeek] = useState({ hours: 0, minutes: 0 });
   const [workoutStreak, setWorkoutStreak] = useState(0);
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -165,97 +168,119 @@ const Profile = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Profile Card */}
-        <Animated.View 
-          entering={FadeInDown.duration(500).springify()}
-          style={styles.profileCard}
-        >
-          <TouchableOpacity onPress={handleChangeProfilePicture}>
-            <View style={styles.avatarContainer}>
-              <Image
-                source={user?.photoURL ? { uri: user?.photoURL } : require('../../assets/images/default-avatar.png')}
-                style={styles.avatar}
-              />
-              <View style={styles.editIcon}>
-                <Ionicons name="pencil" size={16} color="white" />
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.displayName || 'User'}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
-            
-            {loading ? (
-              <ActivityIndicator size="large" color="#4F46E5" />
-            ) : (
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{numWorkoutsThisWeek}</Text>
-                  <Text style={styles.statLabel}>Workouts This Week</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{totalWorkoutTimeThisWeek.hours}h {totalWorkoutTimeThisWeek.minutes}m</Text>
-                  <Text style={styles.statLabel}>Time Spent Grinding</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{workoutStreak}</Text>
-                  <Text style={styles.statLabel}>Day Streak</Text>
-                </View>
-              </View>
-            )}
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F9FAFB' }]}>
+  <ScrollView contentContainerStyle={styles.scrollContainer}>
+    {/* Profile Card */}
+    <Animated.View
+      entering={FadeInDown.duration(500).springify()}
+      style={[
+        styles.profileCard,
+        { backgroundColor: isDarkMode ? '#1E1E1E' : 'white' }
+      ]}
+    >
+      <TouchableOpacity onPress={handleChangeProfilePicture}>
+        <View style={styles.avatarContainer}>
+          <Image
+            source={user?.photoURL ? { uri: user?.photoURL } : require('../../assets/images/default-avatar.png')}
+            style={styles.avatar}
+          />
+          <View style={styles.editIcon}>
+            <Ionicons name="pencil" size={16} color="white" />
           </View>
-        </Animated.View>
-
-        {/* Navigation Buttons */}
-        <View style={styles.menuContainer}>
-          <Animated.View 
-            entering={FadeInUp.duration(500).springify().delay(300)}
-            style={styles.menuButtonContainer}
-          >
-            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("friendsPage")}>
-              <FontAwesome5 name="user-friends" size={hp(2)} color="#4F46E5" />
-              <Text style={styles.menuText}>Friends</Text>
-              <Ionicons name="chevron-forward" size={hp(2.2)} color="#9CA3AF"/>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <Animated.View 
-            entering={FadeInUp.duration(500).springify().delay(400)}
-            style={styles.menuButtonContainer}
-          >
-            <TouchableOpacity style={styles.menuButton} onPress={() => router.push("settings")}>
-              <Ionicons name="settings-sharp" size={hp(2.5)} color="#4F46E5" />
-              <Text style={styles.menuText}>Settings</Text>
-              <Ionicons name="chevron-forward" size={hp(2.2)} color="#9CA3AF"/>
-            </TouchableOpacity>
-          </Animated.View>
         </View>
+      </TouchableOpacity>
 
-        {/* Logout Button */}
-        <Animated.View 
-          entering={FadeInUp.duration(500).springify().delay(500)}
-          style={styles.logoutContainer}
-        >
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={[styles.logoutButton, isLoggingOut && styles.disabledButton]}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <>
-                <Ionicons name="log-out-outline" size={20} color="white" />
-                <Text style={styles.logoutText}>Log Out</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+      <View style={styles.userInfo}>
+        <Text style={[styles.userName, { color: isDarkMode ? '#F3F4F6' : '#1F2937' }]}>
+          {user?.displayName || 'User'}
+        </Text>
+        <Text style={[styles.userEmail, { color: isDarkMode ? '#A1A1AA' : '#6B7280' }]}>
+          {user?.email}
+        </Text>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#4F46E5" />
+        ) : (
+          <View style={[styles.statsContainer, { borderTopColor: isDarkMode ? '#333' : '#E5E7EB' }]}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{numWorkoutsThisWeek}</Text>
+              <Text style={[styles.statLabel, { color: isDarkMode ? '#A1A1AA' : '#6B7280' }]}>
+                Workouts This Week
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {totalWorkoutTimeThisWeek.hours}h {totalWorkoutTimeThisWeek.minutes}m
+              </Text>
+              <Text style={[styles.statLabel, { color: isDarkMode ? '#A1A1AA' : '#6B7280' }]}>
+                Time Spent Grinding
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{workoutStreak}</Text>
+              <Text style={[styles.statLabel, { color: isDarkMode ? '#A1A1AA' : '#6B7280' }]}>
+                Day Streak
+              </Text>
+            </View>
+          </View>
+        )}
+      </View>
+    </Animated.View>
+
+    {/* Navigation Buttons */}
+    <View style={styles.menuContainer}>
+      <Animated.View
+        entering={FadeInUp.duration(500).springify().delay(300)}
+        style={[
+          styles.menuButtonContainer,
+          { backgroundColor: isDarkMode ? '#1E1E1E' : 'white' }
+        ]}
+      >
+        <TouchableOpacity style={styles.menuButton} onPress={() => router.push("friendsPage")}>
+          <FontAwesome5 name="user-friends" size={hp(2)} color="#4F46E5" />
+          <Text style={[styles.menuText, { color: isDarkMode ? '#F3F4F6' : '#374151' }]}>Friends</Text>
+          <Ionicons name="chevron-forward" size={hp(2.2)} color="#9CA3AF" />
+        </TouchableOpacity>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInUp.duration(500).springify().delay(400)}
+        style={[
+          styles.menuButtonContainer,
+          { backgroundColor: isDarkMode ? '#1E1E1E' : 'white' }
+        ]}
+      >
+        <TouchableOpacity style={styles.menuButton} onPress={() => router.push("settings")}>
+          <Ionicons name="settings-sharp" size={hp(2.5)} color="#4F46E5" />
+          <Text style={[styles.menuText, { color: isDarkMode ? '#F3F4F6' : '#374151' }]}>Settings</Text>
+          <Ionicons name="chevron-forward" size={hp(2.2)} color="#9CA3AF" />
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+
+    {/* Logout Button */}
+    <Animated.View
+      entering={FadeInUp.duration(500).springify().delay(500)}
+      style={styles.logoutContainer}
+    >
+      <TouchableOpacity
+        onPress={handleLogout}
+        style={[styles.logoutButton, isLoggingOut && styles.disabledButton]}
+        disabled={isLoggingOut}
+      >
+        {isLoggingOut ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <>
+            <Ionicons name="log-out-outline" size={20} color="white" />
+            <Text style={styles.logoutText}>Log Out</Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  </ScrollView>
+</SafeAreaView>
+
   )
 }
 

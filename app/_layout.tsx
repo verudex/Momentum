@@ -3,11 +3,12 @@ import { AuthProvider, AuthContext } from "../contexts/AuthContext";
 import { Stack } from "expo-router";
 import { View } from "react-native";
 import './globals.css';
+import { ThemeProvider } from "../contexts/ThemeContext";
 
 function RootStack() {
   const { initializing } = useContext(AuthContext);
 
-  if (initializing) {
+  if (initializing) { 
     return (
       <View style={{ flex: 1, backgroundColor: "white", justifyContent: "center", alignItems: "center" }} />
     );
@@ -43,7 +44,9 @@ function RootStack() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootStack />
+      <ThemeProvider>
+          <RootStack />
+      </ThemeProvider>
     </AuthProvider>
   );
 }

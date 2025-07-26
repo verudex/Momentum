@@ -5,14 +5,14 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Alert,
-  Image,
   ScrollView,
+  Image,
   ActivityIndicator,
+  Alert,
+  StyleSheet,
 } from "react-native";
 import { AuthContext } from "../../contexts/AuthContext";
+import { ThemeContext } from "../../contexts/ThemeContext";
 import {
   searchUserByUsername,
   sendFriendRequest,
@@ -22,7 +22,7 @@ import {
   getFriendsList,
   getUserData,
 } from "../../utils/friendsLogic";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { useRouter } from "expo-router";
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
@@ -36,6 +36,9 @@ type UserSummary = {
 const FriendsPage = () => {
   const router = useRouter();
   const { user } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
+
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const [friendInput, setFriendInput] = useState("");
@@ -43,7 +46,7 @@ const FriendsPage = () => {
   const [searchResult, setSearchResult] = useState<UserSummary | null>(null);
   const [friends, setFriends] = useState<UserSummary[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<UserSummary[]>([]);
-  const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
+  const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
 
   useEffect(() => {
     if (user) {
@@ -121,59 +124,95 @@ const FriendsPage = () => {
   };
 
   const renderUserCard = (item: UserSummary, actions: React.ReactNode) => (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: isDarkMode ? "#1E1E1E" : "white", borderColor: isDarkMode ? "#333" : "rgba(0,0,0,0.1)" },
+      ]}
+    >
       <TouchableOpacity
         style={styles.profileInfo}
-        onPress={() => router.push({ pathname: "/(popups)/friendProfile", params: { uid: item.uid, name: item.username, photo: item.photoURL } })}
+        onPress={() =>
+          router.push({
+            pathname: "/(popups)/friendProfile",
+            params: { uid: item.uid, name: item.username, photo: item.photoURL },
+          })
+        }
       >
         <Image source={{ uri: item.photoURL || DEFAULT_AVATAR }} style={styles.avatar} />
-        <Text style={styles.username}>{item.username}</Text>
+        <Text style={[styles.username, { color: isDarkMode ? "#E0E0E0" : "#111827" }]}>{item.username}</Text>
       </TouchableOpacity>
       <View style={styles.cardButtons}>{actions}</View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? "#121212" : "#F9FAFB" }]}>
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'friends' && styles.activeTab]}
-          onPress={() => setActiveTab('friends')}
+          style={[
+            styles.tab,
+            activeTab === "friends" && {
+              borderBottomColor: "#7C3AED",
+              backgroundColor: isDarkMode ? "#2A2A2A" : undefined,
+            },
+          ]}
+          onPress={() => {
+            setActiveTab('friends');
+            fetchFriends(); // Manually Trigger
+          }}
         >
-          <Text style={styles.tabText}>Your Friends</Text>
+          <Text style={[styles.tabText, { color: isDarkMode ? "#E0E0E0" : "#111827" }]}>Your Friends</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
-          onPress={() => setActiveTab('requests')}
+          style={[
+            styles.tab,
+            activeTab === "requests" && {
+              borderBottomColor: "#7C3AED",
+              backgroundColor: isDarkMode ? "#2A2A2A" : undefined,
+            },
+          ]}
+          onPress={() => {
+            setActiveTab("requests");
+            fetchReceivedRequests(); // Manually Trigger 
+            }}
         >
-          <Text style={styles.tabText}>Friend Requests</Text>
+          <Text style={[styles.tabText, { color: isDarkMode ? "#E0E0E0" : "#111827" }]}>Friend Requests</Text>
         </TouchableOpacity>
       </View>
 
-      {activeTab === 'friends' ? (
+      {activeTab === "friends" ? (
         isLoadingFriends ? (
           <ActivityIndicator size="large" color="#7C3AED" style={{ marginTop: hp(2) }} />
         ) : (
           <>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: isDarkMode ? "#1E1E1E" : "#fff",
+                  color: isDarkMode ? "#E0E0E0" : "#111827",
+                  borderColor: isDarkMode ? "#444" : "#ccc",
+                },
+              ]}
               placeholder="Search Friend..."
+              placeholderTextColor={isDarkMode ? "#888" : "#999"}
               value={friendInput}
               onChangeText={setFriendInput}
             />
             <ScrollView contentContainerStyle={{ paddingBottom: hp(10) }}>
-              {friends.filter(friend =>
-                friend.username.toLowerCase().includes(friendInput.trim().toLowerCase())
-              ).length === 0 ? (
+              {friends.filter((friend) => friend.username.toLowerCase().includes(friendInput.trim().toLowerCase())).length === 0 ? (
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>You have no friends 😢</Text>
-                  <Text style={styles.emptyText}>Start by adding some! 😊</Text>
+                  <Text style={[styles.emptyText, { color: isDarkMode ? "#9CA3AF" : "#6B7280" }]}>
+                    You have no friends 😢
+                  </Text>
+                  <Text style={[styles.emptyText, { color: isDarkMode ? "#9CA3AF" : "#6B7280" }]}>
+                    Start by adding some! 😊
+                  </Text>
                 </View>
               ) : (
                 friends
-                  .filter(friend =>
-                    friend.username.toLowerCase().includes(friendInput.trim().toLowerCase())
-                  )
+                  .filter((friend) => friend.username.toLowerCase().includes(friendInput.trim().toLowerCase()))
                   .map((item) => (
                     <View key={item.uid}>
                       {renderUserCard(item, (
@@ -182,7 +221,7 @@ const FriendsPage = () => {
                         </TouchableOpacity>
                       ))}
                     </View>
-                ))
+                  ))
               )}
             </ScrollView>
           </>
@@ -190,26 +229,41 @@ const FriendsPage = () => {
       ) : (
         <>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: isDarkMode ? "#1E1E1E" : "#fff",
+                color: isDarkMode ? "#E0E0E0" : "#111827",
+                borderColor: isDarkMode ? "#444" : "#ccc",
+              },
+            ]}
             placeholder="Search Username..."
+            placeholderTextColor={isDarkMode ? "#888" : "#999"}
             value={usernameInput}
             onChangeText={setUsernameInput}
           />
-          <TouchableOpacity style={styles.button} onPress={handleSearch}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: "#7C3AED" }]} onPress={handleSearch}>
             <Text style={styles.buttonText}>Search</Text>
           </TouchableOpacity>
 
           {searchResult && (
-            <View style={styles.card}>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: isDarkMode ? "#1E1E1E" : "white", borderColor: isDarkMode ? "#333" : "rgba(0,0,0,0.1)" },
+              ]}
+            >
               <Image source={{ uri: searchResult.photoURL || DEFAULT_AVATAR }} style={styles.avatar} />
-              <Text style={styles.username}>{searchResult.username}</Text>
+              <Text style={[styles.username, { color: isDarkMode ? "#E0E0E0" : "#111827" }]}>{searchResult.username}</Text>
               <TouchableOpacity style={styles.actionBtn} onPress={handleSendRequest}>
                 <Text style={styles.actionText}>Send Friend Request</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          <Text style={styles.subHeader}>Received Requests:</Text>
+          <Text style={[styles.subHeader, { color: isDarkMode ? "#9CA3AF" : "#4B5563", backgroundColor: isDarkMode ? "#2A2A2A" : "#E5E7EB" }]}>
+            Received Requests:
+          </Text>
 
           {isLoadingRequests ? (
             <ActivityIndicator size="large" color="#7C3AED" style={{ marginTop: hp(2) }} />
@@ -243,40 +297,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: wp(5),
-    backgroundColor: "#F9FAFB",
   },
   tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    flexDirection: "row",
+    justifyContent: "space-evenly",
   },
   tab: {
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(6),
     borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderBottomColor: "transparent",
   },
   activeTab: {
-    borderBottomColor: '#7C3AED',
+    borderBottomColor: "#7C3AED",
   },
   tabText: {
     fontSize: wp(4),
-    fontWeight: 'bold',
-  },
-  header: {
-    fontSize: hp(3.5),
     fontWeight: "bold",
-    marginBottom: hp(2),
-    alignSelf: 'center',
   },
   input: {
-    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 30,
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(5),
     marginTop: hp(2),
     marginBottom: hp(1),
-    backgroundColor: "#fff",
     fontSize: hp(1.7),
   },
   button: {
@@ -293,12 +338,10 @@ const styles = StyleSheet.create({
   },
   subHeader: {
     fontSize: hp(2),
-    fontWeight: 'bold',
-    color: '#4B5563', // soft grey text
-    backgroundColor: '#E5E7EB', // light grey background
+    fontWeight: "bold",
     paddingHorizontal: wp(8),
     paddingVertical: hp(0.8),
-    borderRadius: 9999, // fully rounded
+    borderRadius: 9999,
     alignSelf: "center",
     marginTop: hp(2),
     marginBottom: hp(1),
@@ -311,19 +354,17 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: wp(5.5),
     textAlign: "center",
-    color: "#6B7280",
     marginBottom: hp(1),
   },
   card: {
-    backgroundColor: 'white',
     borderRadius: 20,
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
     marginVertical: hp(1.5),
     marginHorizontal: wp(3),
-    shadowColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
+    shadowColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -364,6 +405,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
     fontSize: wp(4),
-    alignSelf: 'center',
+    alignSelf: "center",
   },
 });

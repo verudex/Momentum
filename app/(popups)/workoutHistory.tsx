@@ -10,6 +10,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
 import {
   getFirestore,
@@ -25,8 +26,9 @@ import {
   doc,
 } from 'firebase/firestore';
 import { AuthContext } from "../../contexts/AuthContext";
+import { ThemeContext } from "../../contexts/ThemeContext";
 import { app } from '../../utils/firebaseConfig';
-import Animated, { FadeInDown, FadeInUp, FadeInLeft, FadeInRight } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, FadeInLeft } from "react-native-reanimated";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 type Workout = {
@@ -52,13 +54,15 @@ const WorkoutHistory = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [endReached, setEndReached] = useState(false);
   const { user } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
   const { uid } = useLocalSearchParams();
 
   const effectiveUid = typeof uid === "string" ? uid : user?.uid;
 
   if (!effectiveUid) {
     Alert.alert("Error", "No user ID provided.");
-    return;
+    return null; // return null instead of undefined
   }
 
   const fetchWorkouts = async (loadMore = false) => {
@@ -122,109 +126,129 @@ const WorkoutHistory = () => {
       return (
         <React.Fragment key={workout.id}>
           {showDivider && (
-            <Text style={styles.dateDivider}>{currentDayKey}</Text>
+            <Text style={[styles.dateDivider, { 
+              color: isDarkMode ? '#D1D5DB' : '#4B5563',
+              backgroundColor: isDarkMode ? '#374151' : '#E5E7EB'
+            }]}>
+              {currentDayKey}
+            </Text>
           )}
-            <Animated.View
-              entering={FadeInLeft.delay(idx % 10 * 200).duration(500).springify()}
-              style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View style={{ width: "85%" }}>
-                  <Text adjustsFontSizeToFit numberOfLines={1} style={styles.workoutName}>
-                    {workout.name}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    Alert.alert(
-                      "Delete Workout",
-                      "Are you sure you want to delete this workout?",
-                      [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Delete",
-                          style: "destructive",
-                          onPress: async () => {
-                            try {
-                              await deleteDoc(doc(db, 'Users', effectiveUid!, 'workouts', workout.id));
-                              setWorkouts(prev => prev.filter(w => w.id !== workout.id));
-                            } catch (error) {
-                              Alert.alert("Error", "Failed to delete workout.");
-                              console.error("Delete error:", error);
-                            }
+          <Animated.View
+            entering={FadeInLeft.delay(idx % 10 * 200).duration(500).springify()}
+            style={[styles.card, { 
+              backgroundColor: isDarkMode ? '#1E1E1E' : 'white',
+              shadowColor: isDarkMode ? '#000' : '#000',
+              shadowOpacity: isDarkMode ? 0.7 : 0.1,
+            }]}
+          >
+            <View style={styles.cardHeader}>
+              <View style={{ width: "85%" }}>
+                <Text
+                  adjustsFontSizeToFit
+                  numberOfLines={1}
+                  style={[styles.workoutName, { color: isDarkMode ? '#E5E7EB' : '#111827' }]}
+                >
+                  {workout.name}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    "Delete Workout",
+                    "Are you sure you want to delete this workout?",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            await deleteDoc(doc(db, 'Users', effectiveUid!, 'workouts', workout.id));
+                            setWorkouts(prev => prev.filter(w => w.id !== workout.id));
+                          } catch (error) {
+                            Alert.alert("Error", "Failed to delete workout.");
+                            console.error("Delete error:", error);
                           }
                         }
-                      ]
-                    );
-                  }}
-                >
-                  <Text style={styles.deleteIcon}>✕</Text>
-                </TouchableOpacity>
-              </View>
+                      }
+                    ]
+                  );
+                }}
+              >
+                <Text style={[styles.deleteIcon, { color: isDarkMode ? '#9CA3AF' : '#cfd2d8ff' }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
 
-              <Text style={styles.duration}>Duration:
-                {workout.duration.hours ? ` ${workout.duration.hours}h` : ''}
-                {workout.duration.minutes ? ` ${workout.duration.minutes}m` : ''}
-                {workout.duration.seconds ? ` ${workout.duration.seconds}s` : ''}
-              </Text>
-              <Text style={styles.sets}>Sets: {workout.sets} | Reps: {workout.reps}</Text>
-              <Text style={styles.weightLifted}>
-                Weight lifted: {workout.weight}
-                {workout.weight && workout.weight.trim() !== '' ? (
-                  workout.unit === 'imperial' ? ' lbs' : ' kg'
-                ) : ''}
-              </Text>
-              <Text style={styles.timestamp}>
-                {new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                }) + ' at ' + new Date(workout.timestamp.seconds * 1000).toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                })}
-              </Text>
-            </Animated.View>
+            <Text style={[styles.duration, { color: isDarkMode ? '#E5E7EB' : '#111827' }]}>
+              Duration:
+              {workout.duration.hours ? ` ${workout.duration.hours}h` : ''}
+              {workout.duration.minutes ? ` ${workout.duration.minutes}m` : ''}
+              {workout.duration.seconds ? ` ${workout.duration.seconds}s` : ''}
+            </Text>
+            <Text style={[styles.sets, { color: isDarkMode ? '#E5E7EB' : '#111827' }]}>
+              Sets: {workout.sets} | Reps: {workout.reps}
+            </Text>
+            <Text style={[styles.weightLifted, { color: isDarkMode ? '#E5E7EB' : '#111827' }]}>
+              Weight lifted: {workout.weight}
+              {workout.weight && workout.weight.trim() !== '' ? (
+                workout.unit === 'imperial' ? ' lbs' : ' kg'
+              ) : ''}
+            </Text>
+            <Text style={[styles.timestamp, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
+              {new Date(workout.timestamp.seconds * 1000).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }) + ' at ' + new Date(workout.timestamp.seconds * 1000).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              })}
+            </Text>
+          </Animated.View>
         </React.Fragment>
       );
     });
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
-      <View style={styles.headerContainer}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F9FAFB' }]}>
+      <View style={[styles.headerContainer, { backgroundColor: isDarkMode ? '#121212' : 'white' }]}>
         <Animated.Text
           adjustsFontSizeToFit
           numberOfLines={1}
           entering={FadeInUp.duration(500).springify()}
-          style={styles.header}
+          style={[styles.header, { color: isDarkMode ? '#F3F4F6' : 'rgb(57, 53, 53)' }]}
         >
           Workout History
         </Animated.Text>
 
         <Animated.Text
           entering={FadeInUp.delay(200).duration(500).springify()}
-          style={styles.subHeader}
+          style={[styles.subHeader, { color: isDarkMode ? '#A1A1AA' : 'rgb(146, 136, 136)' }]}
         >
           Keep up the momentum!
         </Animated.Text>
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="rgb(146, 136, 136)" style={{ marginTop: hp(30) }} />
+        <ActivityIndicator
+          size="large"
+          color={isDarkMode ? '#A78BFA' : 'rgb(146, 136, 136)'}
+          style={{ marginTop: hp(30) }}
+        />
       ) : workouts.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Animated.Text
             entering={FadeInUp.delay(300).duration(500).springify()}
-            style={styles.emptyText}
+            style={[styles.emptyText, { color: isDarkMode ? '#A1A1AA' : '#888' }]}
           >
             Nothing but crickets here... 🦗
           </Animated.Text>
 
           <Animated.Text
             entering={FadeInUp.delay(500).duration(500).springify()}
-            style={styles.emptyText}
+            style={[styles.emptyText, { color: isDarkMode ? '#A1A1AA' : '#888' }]}
           >
             Start your journey by recording a workout! 💪
           </Animated.Text>
@@ -233,34 +257,34 @@ const WorkoutHistory = () => {
         <ScrollView
           onScroll={handleScroll}
           scrollEventThrottle={16}
-          contentContainerStyle={styles.scrollArea}
+          contentContainerStyle={[styles.scrollArea, { backgroundColor: isDarkMode ? '#121212' : '#F9FAFB' }]}
         >
           {renderedWorkoutList()}
           {loadingMore && (
-            <ActivityIndicator size="small" color="rgb(146, 136, 136)" style={{ marginVertical: hp(5) }} />
+            <ActivityIndicator size="small" color={isDarkMode ? '#A78BFA' : 'rgb(146, 136, 136)'} style={{ marginVertical: hp(5) }} />
           )}
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   )
 }
 
-export default WorkoutHistory
+export default WorkoutHistory;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   headerContainer: {
     paddingBottom: wp(4),
-    backgroundColor: 'white',
   },
   header: {
     fontSize: hp(5),
     fontWeight: 'bold',
     textAlign: 'center',
-    color: 'rgb(57, 53, 53)"',
   },
   subHeader: {
     textAlign: 'center',
-    color: 'rgb(146, 136, 136)',
     fontSize: hp(3),
   },
   emptyContainer: {
@@ -271,23 +295,18 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: hp(2.7),
-    color: '#888',
     textAlign: 'center',
     paddingHorizontal: wp(5),
   },
   scrollArea: {
     paddingHorizontal: wp(6),
-    backgroundColor: "white",
   },
   card: {
-    backgroundColor: 'white',
     borderRadius: 20,
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
     marginVertical: hp(1.5),
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
   },
@@ -298,7 +317,6 @@ const styles = StyleSheet.create({
   },
   deleteIcon: {
     fontSize: hp(3),
-    color: '#cfd2d8ff',
     paddingHorizontal: wp(2),
     paddingBottom: hp(1.5),
     fontWeight: 'bold',
@@ -306,39 +324,32 @@ const styles = StyleSheet.create({
   workoutName: {
     fontSize: hp(3.5),
     fontWeight: '600',
-    color: '#111827',
     marginBottom: hp(1),
   },
   duration: {
     fontSize: hp(2.7),
     fontWeight: '300',
-    color: '#111827',
     marginBottom: hp(1),
   },
   sets: {
     fontSize: hp(2.7),
     fontWeight: '300',
-    color: '#111827',
     marginBottom: hp(1),
   },
   weightLifted: {
     fontSize: hp(2.7),
     fontWeight: '300',
-    color: '#111827',
     marginBottom: hp(1),
   },
   timestamp: {
     fontSize: hp(2),
-    color: '#9CA3AF',
   },
   dateDivider: {
     fontSize: hp(2.2),
     fontWeight: 'bold',
-    color: '#4B5563', // soft grey text
-    backgroundColor: '#E5E7EB', // light grey background
     paddingHorizontal: wp(4),
     paddingVertical: hp(0.6),
-    borderRadius: 9999, // fully rounded
+    borderRadius: 9999,
     alignSelf: "center",
     marginVertical: hp(1),
     overflow: 'hidden',

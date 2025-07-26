@@ -1,12 +1,15 @@
-import { Text, View } from 'react-native';
+import React, { useContext } from "react";
+import { Text, View, StatusBar } from 'react-native';
 import { Tabs } from 'expo-router';
-import { StatusBar } from 'react-native';
 import { FontAwesome6, Ionicons, AntDesign } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { ThemeContext } from "../../contexts/ThemeContext";  // Adjust path as needed
 
-const TabIcon = ({ focused, iconName, label, IconPack }) => {
+const TabIcon = ({ focused, iconName, label, IconPack, isDarkMode }) => {
+  const activeColor = isDarkMode ? '#7C3AED' : 'black';
+  const inactiveColor = isDarkMode ? '#888' : 'gray';
+
   return (
     <View style={{
       alignItems: 'center',
@@ -16,14 +19,14 @@ const TabIcon = ({ focused, iconName, label, IconPack }) => {
       <IconPack
         name={iconName}
         size={24}
-        color={focused ? 'black' : 'gray'}
+        color={focused ? activeColor : inactiveColor}
       />
       <Text
         numberOfLines={1}
         ellipsizeMode="tail"
         style={{
           fontSize: 12,
-          color: focused ? 'black' : 'gray',
+          color: focused ? activeColor : inactiveColor,
           marginTop: 4,
           width: '100%',
           textAlign: 'center',
@@ -37,23 +40,25 @@ const TabIcon = ({ focused, iconName, label, IconPack }) => {
 
 const _layout = () => {
   const insets = useSafeAreaInsets();
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : 'white' }}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
           tabBarStyle: {
-            backgroundColor: 'white',
+            backgroundColor: isDarkMode ? '#121212' : 'white',
             height: hp(5) + (insets.bottom || 0),
             paddingTop: hp(2),
             borderTopWidth: 0.5,
-            borderTopColor: '#ccc',
+            borderTopColor: isDarkMode ? '#333' : '#ccc',
             elevation: 0,
             shadowOpacity: 0,
             shadowOffset: { height: 0 },
-            shadowRadius: 0, 
+            shadowRadius: 0,
           },
         }}
       >
@@ -62,7 +67,7 @@ const _layout = () => {
           options={{
             headerShown: false,
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} iconName="home" label="Home" IconPack={Ionicons} />
+              <TabIcon focused={focused} iconName="home" label="Home" IconPack={Ionicons} isDarkMode={isDarkMode} />
             ),
           }}
         />
@@ -71,7 +76,7 @@ const _layout = () => {
           options={{
             headerShown: false,
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} iconName="dumbbell" label="Workout" IconPack={FontAwesome6} />
+              <TabIcon focused={focused} iconName="dumbbell" label="Workout" IconPack={FontAwesome6} isDarkMode={isDarkMode} />
             ),
           }}
         />
@@ -80,7 +85,7 @@ const _layout = () => {
           options={{
             headerShown: false,
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} iconName="fast-food" label="Diet" IconPack={Ionicons} />
+              <TabIcon focused={focused} iconName="fast-food" label="Diet" IconPack={Ionicons} isDarkMode={isDarkMode} />
             ),
           }}
         />
@@ -89,7 +94,7 @@ const _layout = () => {
           options={{
             headerShown: false,
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} iconName="user" label="Profile" IconPack={AntDesign} />
+              <TabIcon focused={focused} iconName="user" label="Profile" IconPack={AntDesign} isDarkMode={isDarkMode} />
             ),
           }}
         />

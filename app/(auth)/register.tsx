@@ -66,7 +66,7 @@ const Register = () => {
     }
 
     setIsLoading(true);
-    await emailRegister(email, password, username);
+    await emailRegister(email, password, username, setUser);
     setIsLoading(false);
 
     // Clear fields

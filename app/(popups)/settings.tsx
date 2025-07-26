@@ -1,12 +1,14 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { getAuth, deleteUser } from 'firebase/auth';
 import { useRouter } from "expo-router";
 import { getDoc } from 'firebase/firestore';
 import { app } from '../../utils/firebaseConfig';
+import { ThemeContext } from "../../contexts/ThemeContext";
+
 
 type UnitType = 'metric' | 'imperial';
 
@@ -15,10 +17,11 @@ const Settings = () => {
   const firestore = getFirestore(app);
   const auth = getAuth(app);
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [showWorkoutHistory, setShowWorkoutHistory] = useState(true);
   const [showDietHistory, setShowDietHistory] = useState(true);
   const [selectedUnit, setSelectedUnit] = useState('metric');
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
 
   const appVersion = '1.0';
 
@@ -65,6 +68,43 @@ const Settings = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    const user = auth.currentUser;
+
+    if (!user) {
+      Alert.alert("Error", "No user is currently signed in.");
+      return;
+    }
+
+    try {
+      await deleteFirestoreUserData(user.uid);
+      await deleteUser(user);
+      Alert.alert("Account Deleted", "Your account has been successfully removed.");
+      router.replace("/");
+    } catch (error: any) {
+      if (error.code === "auth/requires-recent-login") {
+        Alert.alert(
+          "Re-authentication Required",
+          "Please log in again to delete your account."
+        );
+        // Optionally, navigate them to re-authentication
+      } else {
+        Alert.alert("Error", error.message);
+      }
+    }
+  };
+
+  const deleteFirestoreUserData = async (uid: string) => {
+    const db = getFirestore();
+    try {
+      await deleteDoc(doc(db, "Users", uid));
+      await deleteDoc(doc(db, "userData", uid));
+      console.log("Firestore user document deleted.");
+    } catch (err) {
+      console.error("Error deleting user data:", err);
+    }
+  };
+
   const updateVisibility = async (field: 'showWorkoutHistory' | 'showDietHistory', value: boolean) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -92,16 +132,16 @@ const Settings = () => {
           </View>
           <Switch
             value={isDarkMode}
-            onValueChange={setIsDarkMode}
+            onValueChange={toggleTheme}
             thumbColor={isDarkMode ? "#BB86FC" : "#f5f5f5"}
             trackColor={{ false: "#767577", true: "#3700B3" }}
           />
-        </View>
+        </View> 
       </View>
 
-      {/* Friends Section */}
+      {/* Privacy Section */}
       <View style={[styles.section, isDarkMode && styles.darkSection]}>
-        <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Friends</Text>
+        <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Privacy</Text>
 
         <View style={styles.settingItem}>
           <View style={styles.iconTextContainer}>
@@ -136,31 +176,6 @@ const Settings = () => {
         </View>
       </View>
 
-      {/* Units Section */}
-      <View style={[styles.section, isDarkMode && styles.darkSection]}>
-        <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Units</Text>
-        
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => handleUnitChange('metric')}
-        >
-          <Text style={[styles.settingText, isDarkMode && styles.darkText]}>Metric (kg)</Text>
-          {selectedUnit === 'metric' && (
-            <Ionicons name="checkmark" size={hp(2.2)} color="#34C759"/>
-          )}
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => handleUnitChange('imperial')}
-        >
-          <Text style={[styles.settingText, isDarkMode && styles.darkText]}>Imperial (lbs)</Text>
-          {selectedUnit === 'imperial' && (
-            <Ionicons name="checkmark" size={hp(2.2)} color="#34C759"/>
-          )}
-        </TouchableOpacity>
-      </View>
-
       {/* Account Section */}
       <View style={[styles.section, isDarkMode && styles.darkSection]}>
         <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Account</Text>
@@ -187,7 +202,9 @@ const Settings = () => {
           <Ionicons name="chevron-forward" size={hp(2.2)} color="#9CA3AF"/>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => handleDeleteAccount()}>
           <View style={styles.iconTextContainer}>
             <MaterialIcons name="delete" size={hp(2.5)} color="#FF3B30" />
             <Text style={[styles.settingText, { color: '#FF3B30' }]}>Delete Account</Text>

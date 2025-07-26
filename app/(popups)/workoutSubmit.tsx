@@ -7,12 +7,12 @@ import {
   TextInput, 
   ActivityIndicator, 
   Alert, 
-  ScrollView, 
 } from "react-native";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import Animated, { FadeInDown, FadeInUp, FadeInLeft, Easing } from "react-native-reanimated";
+import Animated, { FadeInLeft, FadeInUp } from "react-native-reanimated";
 import { AuthContext } from "../../contexts/AuthContext";
+import { ThemeContext } from "../../contexts/ThemeContext";
 import WorkoutOptions from "../../utils/workoutOptions";
 import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { app } from "../../utils/firebaseConfig";
@@ -20,6 +20,8 @@ import { Dropdown } from 'react-native-element-dropdown';
 
 const WorkoutSubmit = () => {
   const { user } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
 
   const [workoutName, setWorkoutName] = useState("");
   const [duration, setDuration] = useState({ hours: "", minutes: "", seconds: "" });
@@ -30,7 +32,6 @@ const WorkoutSubmit = () => {
   const [unit, setUnit] = useState<"metric" | "imperial">("metric");
 
   const isInvalid = !workoutName;
-
   const db = getFirestore(app);
 
   useEffect(() => {
@@ -203,166 +204,204 @@ const WorkoutSubmit = () => {
   const isDecimal = (text: string) => /^\d+(\.\d{0,1})?$/.test(text);
 
   return (
-      <KeyboardAwareScrollView
-        style={{ backgroundColor: "white" }}
-        contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled"
+    <KeyboardAwareScrollView
+      style={[styles.contentContainer, { backgroundColor: isDarkMode ? "#121212" : "white" }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Animated.Text
+        adjustsFontSizeToFit
+        numberOfLines={1}
+        entering={FadeInUp.duration(500).springify()}
+        style={[styles.title, { color: isDarkMode ? "#E5E7EB" : "#333" }]}
       >
-        <Animated.Text 
-          adjustsFontSizeToFit
-          numberOfLines={1}
-          entering={FadeInUp.duration(500).springify()} 
-          style={styles.title}
-        >
-          Workout Tracking
-        </Animated.Text>
-        <Animated.Text 
-          entering={FadeInUp.delay(200).duration(500).springify()} 
-          style={styles.subtitle}
-        >
-          Record your workout:
-        </Animated.Text>
+        Workout Tracking
+      </Animated.Text>
 
-        <Animated.View
-          entering={FadeInLeft.delay(300).duration(500).springify()}
-          style={styles.workoutNameInput}
-        >
-          <Dropdown
-            style={styles.input}
-            containerStyle={{
-              paddingVertical: hp(0.5),
-              paddingHorizontal: wp(1),
-              borderRadius: 30,
-              elevation: 2,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 1.41
-            }}
-            placeholderStyle={{ fontSize: hp(2.5), color: "rgba(109, 104, 104, 1)" }}
-            selectedTextStyle={{ fontSize: hp(2.5) }}
-            inputSearchStyle={{
-              height: hp(5),
-              fontSize: hp(2),
-              borderRadius: 30,
-            }}
-            itemTextStyle={{
-              fontSize: hp(2)
-            }}
-            data={WorkoutOptions.map(item => ({ label: item, value: item }))}
-            search
-            maxHeight={hp(25)}
-            labelField="label"
-            valueField="value"
-            placeholder="Workout Name*"
-            searchPlaceholder="Search workouts..."
-            value={workoutName}
-            onChange={item => {
-              setWorkoutName(item.value);
-            }}
+      <Animated.Text
+        entering={FadeInUp.delay(200).duration(500).springify()}
+        style={[styles.subtitle, { color: isDarkMode ? "#A1A1AA" : "#888" }]}
+      >
+        Record your workout:
+      </Animated.Text>
+
+      <Animated.View entering={FadeInLeft.delay(300).duration(500).springify()} style={styles.workoutNameInput}>
+        <Dropdown
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+              borderColor: isDarkMode ? "#444" : "#ccc",
+              shadowColor: isDarkMode ? "#000" : "#000",
+              shadowOpacity: isDarkMode ? 0.7 : 0.2,
+            }
+          ]}
+          containerStyle={{
+            paddingVertical: hp(0.5),
+            paddingHorizontal: wp(1),
+            borderRadius: 30,
+            elevation: 2,
+            shadowColor: isDarkMode ? "#000" : "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: isDarkMode ? 0.7 : 0.2,
+            shadowRadius: 1.41,
+            backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+          }}
+          placeholderStyle={{ fontSize: hp(2.5), color: isDarkMode ? "#777" : "rgba(109, 104, 104, 1)" }}
+          selectedTextStyle={{ fontSize: hp(2.5), color: isDarkMode ? "#E5E7EB" : "black" }}
+          inputSearchStyle={{
+            height: hp(5),
+            fontSize: hp(2),
+            borderRadius: 30,
+            color: isDarkMode ? "#E5E7EB" : "black",
+            backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+          }}
+          itemTextStyle={{
+            fontSize: hp(2),
+            color: isDarkMode ? "#E5E7EB" : "black",
+          }}
+          data={WorkoutOptions.map(item => ({ label: item, value: item }))}
+          search
+          maxHeight={hp(25)}
+          labelField="label"
+          valueField="value"
+          placeholder="Workout Name*"
+          searchPlaceholder="Search workouts..."
+          value={workoutName}
+          onChange={item => setWorkoutName(item.value)}
+        />
+      </Animated.View>
+
+      <View style={styles.durationRow}>
+        <Animated.View entering={FadeInLeft.delay(400).duration(500).springify()} style={styles.durationBox}>
+          <TextInput
+            style={[
+              styles.durationInput,
+              {
+                backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+                borderColor: isDarkMode ? "#444" : "#ccc",
+                color: isDarkMode ? "#E5E7EB" : "black",
+              },
+            ]}
+            placeholder="Hours"
+            placeholderTextColor={isDarkMode ? "#777" : "#999"}
+            keyboardType="number-pad"
+            value={duration.hours}
+            onChangeText={text => (text === "" || isNumber(text)) && setDuration({ ...duration, hours: text })}
           />
         </Animated.View>
 
-        <View style={styles.durationRow}>
-          <Animated.View 
-            entering={FadeInLeft.delay(400).duration(500).springify()} 
-            style={styles.durationBox}
-          >
-            <TextInput
-              style={styles.durationInput}
-              placeholder="Hours"
-              keyboardType="number-pad"
-              value={duration.hours}
-              onChangeText={(text) => {
-                if (text === "" || isNumber(text)) setDuration({ ...duration, hours: text });
-              }}
-            />
-          </Animated.View>
+        <Animated.View entering={FadeInLeft.delay(500).duration(500).springify()} style={[styles.durationBox, { marginHorizontal: 4 }]}>
+          <TextInput
+            style={[
+              styles.durationInput,
+              {
+                backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+                borderColor: isDarkMode ? "#444" : "#ccc",
+                color: isDarkMode ? "#E5E7EB" : "black",
+              },
+            ]}
+            placeholder="Mins"
+            placeholderTextColor={isDarkMode ? "#777" : "#999"}
+            keyboardType="number-pad"
+            value={duration.minutes}
+            onChangeText={text => (text === "" || isNumber(text)) && setDuration({ ...duration, minutes: text })}
+          />
+        </Animated.View>
 
-          <Animated.View 
-            entering={FadeInLeft.delay(500).duration(500).springify()} 
-            style={[styles.durationBox, { marginHorizontal: 4 }]}
-          >
-            <TextInput
-              style={styles.durationInput}
-              placeholder="Mins"
-              keyboardType="number-pad"
-              value={duration.minutes}
-              onChangeText={(text) => {
-                if (text === "" || isNumber(text)) setDuration({ ...duration, minutes: text });
-              }}
-            />
-          </Animated.View>
+        <Animated.View entering={FadeInLeft.delay(600).duration(500).springify()} style={styles.durationBox}>
+          <TextInput
+            style={[
+              styles.durationInput,
+              {
+                backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+                borderColor: isDarkMode ? "#444" : "#ccc",
+                color: isDarkMode ? "#E5E7EB" : "black",
+              },
+            ]}
+            placeholder="Sec"
+            placeholderTextColor={isDarkMode ? "#777" : "#999"}
+            keyboardType="number-pad"
+            value={duration.seconds}
+            onChangeText={text => (text === "" || isNumber(text)) && setDuration({ ...duration, seconds: text })}
+          />
+        </Animated.View>
+      </View>
 
-          <Animated.View 
-            entering={FadeInLeft.delay(600).duration(500).springify()} 
-            style={styles.durationBox}
-          >
-            <TextInput
-              style={styles.durationInput}
-              placeholder="Sec"
-              keyboardType="number-pad"
-              value={duration.seconds}
-              onChangeText={(text) => {
-                if (text === "" || isNumber(text)) setDuration({ ...duration, seconds: text });
-              }}
-            />
-          </Animated.View>
+      <Animated.View entering={FadeInLeft.delay(700).duration(500).springify()}>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+              borderColor: isDarkMode ? "#444" : "#ccc",
+              color: isDarkMode ? "#E5E7EB" : "black",
+            },
+          ]}
+          placeholder="Number of Sets"
+          placeholderTextColor={isDarkMode ? "#777" : "#999"}
+          keyboardType="number-pad"
+          value={sets}
+          onChangeText={text => (text === "" || isNumber(text)) && setSets(text)}
+        />
+      </Animated.View>
+
+      <Animated.View entering={FadeInLeft.delay(800).duration(500).springify()}>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+              borderColor: isDarkMode ? "#444" : "#ccc",
+              color: isDarkMode ? "#E5E7EB" : "black",
+            },
+          ]}
+          placeholder="Number of Reps"
+          placeholderTextColor={isDarkMode ? "#777" : "#999"}
+          keyboardType="number-pad"
+          value={reps}
+          onChangeText={text => (text === "" || isNumber(text)) && setReps(text)}
+        />
+      </Animated.View>
+
+      <Animated.View entering={FadeInLeft.delay(900).duration(500).springify()}>
+        <View style={styles.weightRow}>
+          <TextInput
+            style={[
+              styles.input,
+              { flex: 1 },
+              {
+                backgroundColor: isDarkMode ? "#1E1E1E" : "white",
+                borderColor: isDarkMode ? "#444" : "#ccc",
+                color: isDarkMode ? "#E5E7EB" : "black",
+              },
+            ]}
+            placeholder="Weight Lifted"
+            placeholderTextColor={isDarkMode ? "#777" : "#999"}
+            keyboardType="decimal-pad"
+            value={weight}
+            onChangeText={text => (text === "" || isDecimal(text)) && setWeight(text)}
+          />
+          <Text style={[styles.kgLabel, { color: isDarkMode ? "#E5E7EB" : "#444" }]}>{unit === "metric" ? "kg" : "lbs"}</Text>
         </View>
+      </Animated.View>
 
-        <Animated.View entering={FadeInLeft.delay(700).duration(500).springify()}>
-          <TextInput
-            style={styles.input}
-            placeholder="Number of Sets"
-            keyboardType="number-pad"
-            value={sets}
-            onChangeText={(text) => {
-              if (text === "" || isNumber(text)) setSets(text);
-            }}
-          />
-        </Animated.View>
-
-        <Animated.View entering={FadeInLeft.delay(800).duration(500).springify()}>
-          <TextInput
-            style={styles.input}
-            placeholder="Number of Reps"
-            keyboardType="number-pad"
-            value={reps}
-            onChangeText={(text) => {
-              if (text === "" || isNumber(text)) setReps(text);
-            }}
-          />
-        </Animated.View>
-
-        <Animated.View entering={FadeInLeft.delay(900).duration(500).springify()}>
-          <View style={styles.weightRow}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="Weight Lifted"
-              keyboardType="decimal-pad"
-              value={weight}
-              onChangeText={(text) => {
-                if (text === "" || isDecimal(text)) setWeight(text);
-              }}
-            />
-            <Text style={styles.kgLabel}>{unit === "metric" ? "kg" : "lbs"}</Text>
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInLeft.delay(1000).duration(1000).springify()}>
-          <TouchableOpacity
-            disabled={isInvalid || isLoading}
-            onPress={handleSubmit}
-            style={[styles.submitButton, (isInvalid || isLoading) && styles.disabled]}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.submitButtonText}>Record</Text>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      </KeyboardAwareScrollView>
+      <Animated.View entering={FadeInLeft.delay(1000).duration(1000).springify()}>
+        <TouchableOpacity
+          disabled={isInvalid || isLoading}
+          onPress={handleSubmit}
+          style={[
+            styles.submitButton,
+            (isInvalid || isLoading) && { opacity: isDarkMode ? 0.4 : 0.5 }
+          ]}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.submitButtonText}>Record</Text>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -371,26 +410,23 @@ export default WorkoutSubmit;
 const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: wp(7),
-    backgroundColor: "white",
+    flex: 1,
   },
   title: {
     width: wp(90),
     fontSize: hp(5.5),
     fontWeight: "bold",
     textAlign: "center",
-    color: "#333",
   },
   subtitle: {
     textAlign: "center",
     fontSize: hp(3),
-    color: "#888",
     marginBottom: hp(1),
   },
   input: {
     paddingHorizontal: wp(4),
     paddingVertical: hp(2.7),
     borderRadius: 30,
-    borderColor: "#ccc",
     borderWidth: 1,
     marginBottom: hp(3),
     fontSize: hp(2.5),
@@ -412,7 +448,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(2.5),
     borderRadius: 30,
-    borderColor: "#ccc",
     borderWidth: 1,
     fontSize: hp(2.5),
   },
@@ -426,7 +461,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginHorizontal: wp(7),
     marginBottom: hp(4),
-    color: "#444",
   },
   submitButton: {
     backgroundColor: "#7C3AED",
@@ -438,8 +472,5 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: hp(2.5),
     fontWeight: "bold",
-  },
-  disabled: {
-    opacity: 0.5,
   },
 });

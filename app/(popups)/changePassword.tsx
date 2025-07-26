@@ -5,10 +5,14 @@ import Animated, { FadeInUp, FadeInLeft } from 'react-native-reanimated';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Feather } from '@expo/vector-icons';
 import { AuthContext } from '../../contexts/AuthContext';
+import { ThemeContext } from '../../contexts/ThemeContext';
 import { getAuth, updatePassword } from 'firebase/auth';
 
 const ChangePassword = () => {
   const { user } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === 'dark';
+
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -54,13 +58,29 @@ const ChangePassword = () => {
   };
 
   return (
-    <KeyboardAwareScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Animated.Text entering={FadeInUp.springify()} style={styles.title}>Change Password</Animated.Text>
+    <KeyboardAwareScrollView
+      style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : 'white' }]}
+      contentContainerStyle={styles.contentContainer}
+    >
+      <Animated.Text
+        entering={FadeInUp.springify()}
+        style={[styles.title, { color: isDarkMode ? '#E0E0E0' : '#111827' }]}
+      >
+        Change Password
+      </Animated.Text>
 
       <Animated.View entering={FadeInLeft.delay(200).springify()} style={styles.inputWrapper}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDarkMode ? '#1E1E1E' : 'white',
+              color: isDarkMode ? '#E0E0E0' : '#111827',
+              borderColor: isDarkMode ? '#444' : '#ccc',
+            },
+          ]}
           placeholder="New Password"
+          placeholderTextColor={isDarkMode ? '#888' : '#999'}
           secureTextEntry={!showPassword}
           value={newPassword}
           onChangeText={(pw) => {
@@ -76,14 +96,22 @@ const ChangePassword = () => {
           style={styles.eyeIcon}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+          <Feather name={showPassword ? "eye-off" : "eye"} size={20} color={isDarkMode ? '#AAA' : 'gray'} />
         </TouchableOpacity>
       </Animated.View>
 
       <Animated.View entering={FadeInLeft.delay(300).springify()} style={styles.inputWrapper}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDarkMode ? '#1E1E1E' : 'white',
+              color: isDarkMode ? '#E0E0E0' : '#111827',
+              borderColor: isDarkMode ? '#444' : '#ccc',
+            },
+          ]}
           placeholder="Confirm Password"
+          placeholderTextColor={isDarkMode ? '#888' : '#999'}
           secureTextEntry={!showPassword}
           value={confirmPassword}
           onChangeText={(pw) => {
@@ -97,13 +125,21 @@ const ChangePassword = () => {
           style={styles.eyeIcon}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="gray" />
+          <Feather name={showPassword ? "eye-off" : "eye"} size={20} color={isDarkMode ? '#AAA' : 'gray'} />
         </TouchableOpacity>
-        {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
+        {passwordError ? (
+          <Text style={[styles.error, { color: '#ef4444' }]}>
+            {passwordError}
+          </Text>
+        ) : null}
       </Animated.View>
 
       <Animated.View entering={FadeInLeft.delay(400).springify()}>
-        <TouchableOpacity onPress={handlePasswordChange} style={styles.submitButton} disabled={isLoading}>
+        <TouchableOpacity
+          onPress={handlePasswordChange}
+          style={[styles.submitButton, { backgroundColor: isDarkMode ? '#7C3AED' : '#7C3AED' }]}
+          disabled={isLoading}
+        >
           {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
@@ -118,7 +154,6 @@ const ChangePassword = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white'
   },
   contentContainer: {
     paddingTop: hp(15),
@@ -128,7 +163,7 @@ const styles = StyleSheet.create({
     fontSize: hp(4.5),
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: hp(3)
+    marginBottom: hp(3),
   },
   inputWrapper: {
     position: 'relative',
@@ -138,11 +173,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
     paddingVertical: hp(2.7),
     borderRadius: 30,
-    borderColor: '#ccc',
     borderWidth: 1,
     fontSize: hp(2),
-    color: '#111827',
-    backgroundColor: 'white'
   },
   eyeIcon: {
     position: 'absolute',
@@ -151,22 +183,20 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -10 }],
   },
   error: {
-    color: '#ef4444',
     fontSize: 14,
     marginTop: 4,
     marginLeft: wp(2),
   },
   submitButton: {
-    backgroundColor: '#7C3AED',
     paddingVertical: hp(2),
     borderRadius: 30,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   submitButtonText: {
     color: 'white',
     fontSize: hp(2.5),
-    fontWeight: 'bold'
-  }
+    fontWeight: 'bold',
+  },
 });
 
 export default ChangePassword;
