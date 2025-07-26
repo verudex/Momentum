@@ -185,8 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212",
   },
   contentContainer: {
-    paddingTop: hp(10),
-    paddingHorizontal: wp(8),
+    paddingTop: hp(8),
   },
   contentContainerLight: {
     backgroundColor: "white",

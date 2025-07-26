@@ -60,15 +60,14 @@ const Home = () => {
     shadowColor: isDarkMode ? '#000' : '#4F46E5',
   };
 
-  // General States
-  const [loading, setLoading] = useState(true);
-
   // States for Leaderboard
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
   const [leaderboardFilter, setLeaderboardFilter] = useState("");
   const [sortedLeaderboard, setSortedLeaderboard] = useState<FriendEntry[]>([]);
 
 
   // States for Workout Summary
+  const [loadingWorkout, setLoadingWorkout] = useState(true);
   const [numWorkoutsThisWeek, setNumWorkoutsThisWeek] = useState(0);
   const [totalWorkoutTimeThisWeek, setTotalWorkoutTimeThisWeek] = useState({ hours: 0, minutes: 0 });
   const [workoutStreak, setWorkoutStreak] = useState(0);
@@ -94,6 +93,7 @@ const Home = () => {
 
   const updateLeaderboard = async () => {
   if (!user || !leaderboardFilter || !rankType) return;
+  setLoadingLeaderboard(true);
 
   try {
     const currentUid = user.uid;
@@ -157,9 +157,25 @@ const Home = () => {
       })
       .slice(0, 10);
 
-    setSortedLeaderboard(sorted);
+    setSortedLeaderboard(
+      sorted.map(entry => {
+        if (rankType === "Max Weight") {
+          return { ...entry, value: `${entry.value} kg` };
+        } else if (rankType === "Time Spent") {
+          const [h, m, s] = entry.value.split(":").map(Number);
+          const parts = [];
+          if (h) parts.push(`${h}h`);
+          if (m) parts.push(`${m}m`);
+          if (s) parts.push(`${s}s`);
+          return { ...entry, value: parts.join(" ") };
+        }
+        return entry;
+      })
+    );
   } catch (err) {
     console.error("Failed to update leaderboard:", err);
+  } finally {
+    setLoadingLeaderboard(false);
   }
 };
 
@@ -176,7 +192,7 @@ const Home = () => {
       if (!user) return;
 
       const fetchData = async () => {
-        setLoading(true);
+        setLoadingWorkout(true);
         setLoadingDiet(true);
 
         try {
@@ -249,6 +265,8 @@ const Home = () => {
             name: doc.data().name ?? "",
             timestamp: doc.data().timestamp ?? { seconds: 0 }
           })));
+
+          setLoadingWorkout(false);
 
           // --------------------
           // DIET TARGET & DATA
@@ -367,12 +385,12 @@ const Home = () => {
             timestamp: doc.data().timestamp ?? { seconds: 0 }
           })));
 
-          setLoading(false);
           setLoadingDiet(false);
 
         } catch (err) {
           console.error("Failed to fetch/update data:", err);
-          setLoading(false);
+        } finally {
+          setLoadingWorkout(false);
           setLoadingDiet(false);
         }
       };
@@ -412,7 +430,7 @@ const Home = () => {
                   placeholder="(Select Workout)"
                   placeholderStyle={[styles.dropdownText, { color: colors.secondaryText }]}
                   selectedTextStyle={[styles.dropdownText, { color: colors.primaryText }]}
-                  itemTextStyle={styles.dropdownItemText}
+                  itemTextStyle={[styles.dropdownItemText, { color: isDarkMode ? "#E5E7EB" : "black" }]}
                   containerStyle={[styles.dropdownContainer, { backgroundColor: colors.cardBackground }]}
                   search
                   searchPlaceholder="Search"
@@ -449,7 +467,7 @@ const Home = () => {
                   placeholder="(Select Value)"
                   placeholderStyle={[styles.dropdownText, { color: colors.secondaryText }]}
                   selectedTextStyle={[styles.dropdownText, { color: colors.primaryText }]}
-                  itemTextStyle={styles.dropdownItemText}
+                  itemTextStyle={[styles.dropdownItemText, { color: isDarkMode ? "#E5E7EB" : "black" }]}
                   containerStyle={[styles.dropdownContainer, { backgroundColor: colors.cardBackground }]}
                 />
               </View>
@@ -461,6 +479,8 @@ const Home = () => {
                     <Text style={[styles.viewMoreText, { color: colors.accentColor }]}>Be the first one to start!</Text>
                   </TouchableOpacity>
                 </>
+              ) : loadingLeaderboard ? (
+                <ActivityIndicator size="small" color={colors.secondaryText} style={{ marginTop: 10 }} />
               ) : (
                 <>
                   {sortedLeaderboard.map((entry, index) => {
@@ -490,7 +510,7 @@ const Home = () => {
       {/* Workout Summary */}
       <Animated.View entering={FadeInUp.delay(500).duration(500).springify()} style={[styles.card, { backgroundColor: colors.cardBackground, shadowColor: colors.shadowColor }]}>
         <Text style={[styles.cardTitle, { color: colors.accentColor }]}>💪 Workout Summary</Text>
-        {loading ? (
+        {loadingWorkout ? (
           <ActivityIndicator size="large" color={colors.secondaryText} style={{ marginVertical: hp(4) }} />
         ) : (
           <>

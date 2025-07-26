@@ -27,7 +27,7 @@ const GeneratePlan = () => {
     if (!prompt || !user) return;
     setIsLoading(true);
     try {
-      const API_BASE_URL = "http://192.168.1.77:3001";
+      const API_BASE_URL = "https://momentum-mbw7.onrender.com";
 
       const response = await fetch(`${API_BASE_URL}/api/calculate/generate-workout`, {
         method: "POST",

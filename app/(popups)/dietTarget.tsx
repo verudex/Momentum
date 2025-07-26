@@ -165,7 +165,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingTop: hp(10),
-    paddingHorizontal: wp(8),
   },
   contentContainerLight: {
     backgroundColor: "white",
