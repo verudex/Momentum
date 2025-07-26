@@ -381,7 +381,7 @@ const WorkoutSubmit = () => {
             value={weight}
             onChangeText={text => (text === "" || isDecimal(text)) && setWeight(text)}
           />
-          <Text style={[styles.kgLabel, { color: isDarkMode ? "#E5E7EB" : "#444" }]}>{unit === "metric" ? "kg" : "lbs"}</Text>
+          <Text style={[styles.kgLabel, { color: isDarkMode ? "#E5E7EB" : "#444" }]}>kg</Text>
         </View>
       </Animated.View>
 
