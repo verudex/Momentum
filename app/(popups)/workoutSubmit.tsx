@@ -363,7 +363,7 @@ const WorkoutSubmit = () => {
         />
       </Animated.View>
 
-      <Animated.View entering={FadeInLeft.delay(900).duration(500).springify()}>
+      {/* <Animated.View entering={FadeInLeft.delay(900).duration(500).springify()}>
         <View style={styles.weightRow}>
           <TextInput
             style={[
@@ -383,9 +383,9 @@ const WorkoutSubmit = () => {
           />
           <Text style={[styles.kgLabel, { color: isDarkMode ? "#E5E7EB" : "#444" }]}>{unit === "metric" ? "kg" : "lbs"}</Text>
         </View>
-      </Animated.View>
+      </Animated.View> */}
 
-      <Animated.View entering={FadeInLeft.delay(1000).duration(1000).springify()}>
+      <Animated.View entering={FadeInLeft.delay(900).duration(900).springify()}>
         <TouchableOpacity
           disabled={isInvalid || isLoading}
           onPress={handleSubmit}
