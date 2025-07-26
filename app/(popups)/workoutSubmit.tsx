@@ -249,7 +249,6 @@ const WorkoutSubmit = () => {
           placeholderStyle={{ fontSize: hp(2.5), color: isDarkMode ? "#777" : "rgba(109, 104, 104, 1)" }}
           selectedTextStyle={{ fontSize: hp(2.5), color: isDarkMode ? "#E5E7EB" : "black" }}
           inputSearchStyle={{
-            height: hp(5),
             fontSize: hp(2),
             borderRadius: 30,
             color: isDarkMode ? "#E5E7EB" : "black",

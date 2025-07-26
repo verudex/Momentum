@@ -435,7 +435,6 @@ const Home = () => {
                   search
                   searchPlaceholder="Search"
                   inputSearchStyle={{
-                    height: hp(4),
                     fontSize: hp(1.5),
                     borderRadius: 30,
                     color: colors.primaryText,

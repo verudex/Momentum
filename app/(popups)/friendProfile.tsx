@@ -128,7 +128,7 @@ export default function FriendProfilePage() {
           <Animated.View entering={FadeInUp.duration(500).springify().delay(200)} style={[styles.menuButtonContainer, { backgroundColor: isDarkMode ? '#1E1E1E' : 'white' }]}>
             <TouchableOpacity
               style={styles.buttonRow}
-              onPress={() => router.push({ pathname: "/(popups)/workoutHistory", params: { uid } })}
+              onPress={() => router.push({ pathname: "/(popups)/friendWorkoutHistory", params: { uid } })}
             >
               <Ionicons name="barbell" size={hp(2.5)} color="#4F46E5" />
               <Text style={[styles.buttonText, { color: isDarkMode ? '#F3F4F6' : '#374151' }]}>View Workout History</Text>
@@ -141,7 +141,7 @@ export default function FriendProfilePage() {
           <Animated.View entering={FadeInUp.duration(500).springify().delay(300)} style={[styles.menuButtonContainer, { backgroundColor: isDarkMode ? '#1E1E1E' : 'white' }]}>
             <TouchableOpacity
               style={styles.buttonRow}
-              onPress={() => router.push({ pathname: "/(popups)/dietHistory", params: { uid } })}
+              onPress={() => router.push({ pathname: "/(popups)/friendDietHistory", params: { uid } })}
             >
               <Ionicons name="nutrition-sharp" size={hp(2.5)} color="#4F46E5" />
               <Text style={[styles.buttonText, { color: isDarkMode ? '#F3F4F6' : '#374151' }]}>View Diet History</Text>

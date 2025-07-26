@@ -116,11 +116,29 @@ const FriendsPage = () => {
     fetchReceivedRequests();
   };
 
-  const handleUnfriend = async (friendUid: string) => {
+  const handleUnfriend = (friendUid: string) => {
     if (!user) return;
-    await removeFriend(user.uid, friendUid);
-    Alert.alert("Unfriended");
-    fetchFriends();
+
+    Alert.alert(
+      "Confirm Unfriend",
+      "Are you sure you want to unfriend this user?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Unfriend",
+          style: "destructive",
+          onPress: async () => {
+            await removeFriend(user.uid, friendUid);
+            Alert.alert("Unfriended");
+            fetchFriends();
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const renderUserCard = (item: UserSummary, actions: React.ReactNode) => (
