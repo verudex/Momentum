@@ -79,6 +79,6 @@ Technology|Purpose|Rationale
 
 ## 🗂️ Miscellaneous
 
-[Momentum Proposal](assets/doc/MomentumDoc.pdf)
+[Momentum Proposal](assets/images/MomentumDoc.pdf)
 
 [Momentum Showcase Video](https://www.youtube.com/watch?v=HVAYr3ds4cc)
