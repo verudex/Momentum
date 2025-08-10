@@ -8,12 +8,9 @@
 ## 🚀 Overview
 **Momentum** is an all-in-one fitness and nutrition tracking app tailored for Singaporeans. Designed to make wellness effortless and enjoyable, Momentum empowers users to track their workouts, monitor their diets, and stay consistent with personalized, AI-powered support. Whether you're aiming for a fitness streak, building strength, or improving eating habits — Momentum is your smart gym companion.
 
----
-
 ## 🎯 Aim  
 To support Singaporeans in achieving their fitness goals through personalized workout planning, nutrition tracking, and social motivation — all from a single mobile app.
 
----
 
 ## ✨ Key Features  
 
