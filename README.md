@@ -1,8 +1,8 @@
 # Momentum  
-### The gym app with all your needs — because progress shouldn't pause.
 
 <p align="center">
-  <img src="./assets/images/MomentumReadmeLogo.png" width="250">
+  <img src="./assets/images/MomentumDemo.gif" width="250">
+  <p align="center">The gym app with all your needs — because progress shouldn't pause.<p>
 </p>
 
 ## 🚀 Overview
@@ -67,12 +67,18 @@ Manage your experience.
 - Delete account securely  
 - Enable/disable dark mode
 
----
-
 ## 🔄 Tech Stack  
-- **Frontend:** React Native (with Expo), Reanimated, Responsive Screen, Keyboard Controller  
-- **Backend:** Firebase Firestore, Firebase Authentication, Firebase Storage  
-- **AI Integration:** Gemini API (for workout plan generation)  
-- **Storage & Hosting:** Firebase and Render
 
----
+Technology|Purpose|Rationale
+-|-|-
+![React Native](https://img.shields.io/badge/react_native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) | Cross-platform mobile app framework | Enables the app to run on both Android and iOS without maintaining separate codebases.
+![Expo](https://img.shields.io/badge/expo-000020?style=for-the-badge&logo=expo&logoColor=white) | Development platform for React Native | Simplifies development, prototyping, and deployment workflows.
+![Firebase](https://img.shields.io/badge/firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black) | Backend-as-a-Service (Firestore, Auth, Storage) | Provides scalable cloud database, secure authentication, and file storage.
+![Google Gemini](https://img.shields.io/badge/google%20gemini-8E75B2?style=for-the-badge&logo=google%20gemini&logoColor=white) | AI service | Powers AI-generated workout plans based on user goals and preferences.
+![Render](https://img.shields.io/badge/render-00979D?style=for-the-badge&logo=render&logoColor=white) | Cloud hosting platform | Hosts backend services and APIs with easy scaling and deployment.
+
+## 🗂️ Miscellaneous
+
+[Momentum Proposal](assets/doc/MomentumDoc.pdf)
+
+[Momentum Showcase Video](https://www.youtube.com/watch?v=HVAYr3ds4cc)
